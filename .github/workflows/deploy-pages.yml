@@ -1,0 +1,68 @@
+name: Deploy to GitHub Pages
+
+# Build trang tĩnh rồi đẩy lên GitHub Pages.
+# Backend KHÔNG nằm trong repo này — nó chạy trên máy và ra Internet qua Cloudflare Tunnel.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Cài đặt gói
+        run: npm ci
+
+      - name: Kiểm tra kiểu dữ liệu
+        run: npm run check
+
+      - name: Build trang tĩnh
+        env:
+          # Đặt ở: Settings → Secrets and variables → Actions → tab Variables
+          #   PUBLIC_API_URL  = https://api.phamhungdev.click/api/v1
+          #   PUBLIC_SITE_URL = https://phamhungdev.click
+          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+          PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+        run: npm run build
+
+      - name: Kiểm tra kết quả build
+        run: |
+          test -f dist/index.html || (echo "::error::Thiếu index.html" && exit 1)
+          test -f dist/.nojekyll || (echo "::error::Thiếu .nojekyll — GitHub sẽ bỏ qua _astro/" && exit 1)
+          if grep -rq "localhost:8080" dist/_astro/*.js 2>/dev/null; then
+            echo "::error::Bản build đang trỏ API về localhost. Kiểm tra biến PUBLIC_API_URL."
+            exit 1
+          fi
+          echo "Số trang HTML: $(find dist -name '*.html' | wc -l)"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

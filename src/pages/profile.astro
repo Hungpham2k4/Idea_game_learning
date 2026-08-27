@@ -1,0 +1,14 @@
+---
+/**
+ * @file src/pages/profile.astro
+ * @description Hồ sơ người chơi: chỉ số, tiến trình, huy hiệu, lịch sử.
+ */
+import GameLayout from '@/layouts/GameLayout.astro';
+import ProfilePanel from '@/components/game/ProfilePanel';
+---
+
+<GameLayout title="Hồ sơ" active="profile">
+    <main class="pb-16">
+        <ProfilePanel client:load />
+    </main>
+</GameLayout>

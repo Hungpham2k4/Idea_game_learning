@@ -1,0 +1,24 @@
+---
+/**
+ * @file src/pages/play/[gameSlug]/[levelIndex].astro
+ * @description Màn hình chơi game.
+ *
+ * Build tĩnh: sinh sẵn HTML cho mọi cặp (game, màn) — xem src/config/routes.ts.
+ * Quyền vào màn vẫn do backend quyết định; trang này chỉ dựng khung, GamePlayer
+ * gọi API và tự xử lý trường hợp bị khoá hoặc màn không tồn tại.
+ */
+import GameLayout from '@/layouts/GameLayout.astro';
+import GamePlayer from '@/components/game/GamePlayer';
+import { playParams } from '@/config/routes';
+
+export function getStaticPaths() {
+    return playParams();
+}
+
+const { gameSlug, levelIndex } = Astro.params;
+const index = Number(levelIndex);
+---
+
+<GameLayout title="Đang chơi" active="hub">
+    <GamePlayer gameSlug={gameSlug!} levelIndex={index} client:load />
+</GameLayout>

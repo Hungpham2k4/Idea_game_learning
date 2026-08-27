@@ -1,0 +1,47 @@
+# build output
+dist/
+
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+.env
+.prompt.md
+# ═══════════════════════════════════════════════════════════════════════════
+#  CodeQuest — bổ sung
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Mọi biến thể .env (.env.pro chứa URL API nội bộ)
+.env.*
+!.env.example
+
+# Cache của Vite — để lẫn vào là lỗi "jsxDEV is not a function"
+.vite/
+node_modules/.vite/
+*.tsbuildinfo
+
+# Tài sản thừa từ boilerplate gốc (dự án bất động sản), ~16MB.
+# Chặn để: không công khai ảnh nhân sự công ty khác trên tên miền của bạn,
+# và mỗi lần deploy nhẹ đi 16MB. File vẫn còn trên máy.
+public/tinymce/
+public/vendor/
+public/icons/
+public/images/

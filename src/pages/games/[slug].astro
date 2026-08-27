@@ -1,0 +1,24 @@
+---
+/**
+ * @file src/pages/games/[slug].astro
+ * @description Trang chi tiết một game: mô tả + danh sách màn chơi.
+ *
+ * Build tĩnh: mỗi game được sinh sẵn một file HTML (xem src/config/routes.ts).
+ * Nội dung thật do GameDetail gọi API lấy về lúc chạy.
+ */
+import GameLayout from '@/layouts/GameLayout.astro';
+import GameDetail from '@/components/game/GameDetail';
+import { gameParams } from '@/config/routes';
+
+export function getStaticPaths() {
+    return gameParams();
+}
+
+const { slug } = Astro.params;
+---
+
+<GameLayout title="Chọn màn chơi" active="hub">
+    <main class="pb-16">
+        <GameDetail slug={slug!} client:load />
+    </main>
+</GameLayout>

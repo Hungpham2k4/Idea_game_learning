@@ -1,0 +1,56 @@
+---
+/**
+ * @file src/pages/admin/[...all].astro
+ * @description Cổng vào SPA quản trị (React Router).
+ *
+ * Build tĩnh: sinh sẵn HTML cho /admin và từng nhánh con (xem src/config/routes.ts),
+ * nhờ vậy mở thẳng /admin/users trên GitHub Pages vẫn ra trang, không bị 404.
+ *
+ * Hai lớp bảo vệ (không còn lớp kiểm tra cookie phía server vì trang là tĩnh):
+ *   1. AdminApp gọi /auth/me kiểm tra vai trò thật, không đúng thì đá về /hub.
+ *   2. Backend NestJS chặn mọi endpoint /admin bằng RolesGuard — đây mới là hàng rào thật.
+ */
+
+import AdminApp from '@/components/admin/AdminApp';
+import { adminParams } from '@/config/routes';
+
+export function getStaticPaths() {
+    return adminParams();
+}
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Panel</title>
+    <!-- Prevent search engines from indexing the admin panel -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Critical: prevent FOUC in SPA -->
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; height: 100%; }
+        body {
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+            background: #f8fafc;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Loading state before React hydrates */
+        #admin-root:empty::before {
+            content: '';
+            display: flex;
+            min-height: 100vh;
+        }
+    </style>
+  </head>
+  <body>
+    <!--
+        AdminApp renders the full React SPA (BrowserRouter + all admin routes).
+        client:only="react" → no SSR, pure client-side hydration.
+    -->
+    <AdminApp client:only="react" />
+  </body>
+</html>

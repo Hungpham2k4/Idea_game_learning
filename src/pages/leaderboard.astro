@@ -1,0 +1,23 @@
+---
+/**
+ * @file src/pages/leaderboard.astro
+ * @description Bảng xếp hạng toàn trường / theo lớp / theo game.
+ */
+import GameLayout from '@/layouts/GameLayout.astro';
+import LeaderboardPanel from '@/components/game/Leaderboard';
+---
+
+<GameLayout title="Bảng xếp hạng" active="leaderboard">
+    <main class="pb-16">
+        <section class="border-b border-cq-line bg-cq-panel/40">
+            <div class="mx-auto max-w-4xl px-4 py-8">
+                <h1 class="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Bảng xếp hạng</h1>
+                <p class="mt-1.5 text-sm text-cq-muted">
+                    Người dẫn đầu không phải người bấm nhanh nhất, mà là người dùng kiến thức tốt nhất.
+                </p>
+            </div>
+        </section>
+
+        <LeaderboardPanel client:load />
+    </main>
+</GameLayout>

@@ -1,0 +1,26 @@
+---
+/**
+ * @file src/pages/hub.astro
+ * @description Bản đồ game — màn hình chính sau khi đăng nhập.
+ */
+import GameLayout from '@/layouts/GameLayout.astro';
+import GameHub from '@/components/game/GameHub';
+---
+
+<GameLayout title="Bản đồ game" active="hub">
+    <main class="pb-16">
+        <section class="border-b border-cq-line bg-cq-panel/40">
+            <div class="mx-auto max-w-6xl px-4 py-8">
+                <h1 class="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                    Bản đồ CodeQuest
+                </h1>
+                <p class="mt-1.5 max-w-2xl text-sm text-cq-muted">
+                    Mỗi game dạy một kỹ năng. Chơi xong game này mới mở được game sau —
+                    thứ tự đó chính là lộ trình học từ câu lệnh đơn giản tới xử lý sự cố hệ thống thật.
+                </p>
+            </div>
+        </section>
+
+        <GameHub client:load />
+    </main>
+</GameLayout>

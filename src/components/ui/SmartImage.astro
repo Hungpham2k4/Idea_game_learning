@@ -1,0 +1,108 @@
+---
+/**
+ * @file src/components/ui/SmartImage.astro
+ * @description Image Hub — universal image wrapper using `astro:assets`.
+ *
+ * Features:
+ *   ✓ Local images → processed through Astro's build pipeline (format conversion, srcset)
+ *   ✓ Remote URLs → passed through `image.domains` whitelist in astro.config.mjs
+ *   ✓ Error fallback → displays `/placeholders/no-image.png` via client-side onerror
+ *   ✓ lazy loading by default (loading="lazy" + decoding="async")
+ *   ✓ Optional `eager` prop for LCP/above-the-fold images
+ *   ✓ Aspect-ratio aware via `aspect` prop
+ *
+ * Usage:
+ *   <!-- Local asset -->
+ *   <SmartImage src={import('../assets/images/hero.jpg')} alt="Hero" />
+ *
+ *   <!-- Remote URL -->
+ *   <SmartImage src="https://example.com/photo.jpg" alt="Photo" width={800} height={600} />
+ *
+ *   <!-- LCP / above-the-fold -->
+ *   <SmartImage src={heroImg} alt="Hero" eager />
+ */
+
+import { Image } from 'astro:assets';
+
+interface Props {
+    /** Local imported image OR a remote URL string */
+    src: ImageMetadata | string;
+    /** Alt text — required for accessibility */
+    alt: string;
+    /** Width in pixels */
+    width?: number;
+    /** Height in pixels */
+    height?: number;
+    /** Output image format */
+    format?: 'avif' | 'webp' | 'jpeg' | 'png';
+    /** Image quality (1–100) */
+    quality?: number;
+    /** Additional CSS classes */
+    class?: string;
+    /** Use eager loading for LCP images (above-the-fold). Default: lazy. */
+    eager?: boolean;
+    /** CSS aspect-ratio value, e.g. '16/9', '4/3', '1/1' */
+    aspect?: string;
+    /** Sizes attribute for responsive images */
+    sizes?: string;
+    /** fetchpriority for LCP images */
+    fetchpriority?: 'high' | 'low' | 'auto';
+}
+
+const {
+    src,
+    alt,
+    width = 800,
+    height = 600,
+    format = 'webp',
+    quality = 80,
+    class: className = '',
+    eager = false,
+    aspect,
+    sizes,
+    fetchpriority,
+} = Astro.props;
+
+const FALLBACK_SRC = '/placeholders/no-image.png';
+const isRemote = typeof src === 'string';
+
+// Inline onerror handler — replaces broken images with the fallback placeholder
+const onErrorScript = `this.onerror=null; this.src='${FALLBACK_SRC}';`;
+---
+
+{isRemote ? (
+    <!--
+        Remote URLs: Astro's <Image> requires the domain to be
+        in `image.domains` in astro.config.mjs.
+        If the domain is unknown at build time, fall back to a plain <img>.
+    -->
+    <img
+        src={src as string}
+        alt={alt}
+        width={width}
+        height={height}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchpriority={fetchpriority ?? (eager ? 'high' : undefined)}
+        sizes={sizes}
+        onerror={onErrorScript}
+        class={className}
+        style={aspect ? `aspect-ratio: ${aspect}; object-fit: cover;` : undefined}
+    />
+) : (
+    <Image
+        src={src as ImageMetadata}
+        alt={alt}
+        width={width}
+        height={height}
+        format={format}
+        quality={quality}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchpriority={fetchpriority ?? (eager ? 'high' : undefined)}
+        sizes={sizes}
+        class={className}
+        style={aspect ? `aspect-ratio: ${aspect}; object-fit: cover;` : undefined}
+        onerror={onErrorScript}
+    />
+)}

@@ -1,0 +1,51 @@
+---
+/**
+ * @file src/pages/404.astro
+ * @description Trang báo không tìm thấy.
+ *
+ * Trên GitHub Pages, mọi đường dẫn không có file HTML tương ứng đều rơi vào đây.
+ * Thường gặp nhất là màn chơi vượt quá số màn đã sinh sẵn — nên trang này cố
+ * đoán ý người dùng và mời họ quay lại đúng chỗ.
+ */
+import GameLayout from '@/layouts/GameLayout.astro';
+---
+
+<GameLayout title="Không tìm thấy trang" bare>
+    <main class="cq-grid-bg grid min-h-screen place-items-center px-4">
+        <div class="cq-panel max-w-lg p-8 text-center">
+            <p class="font-mono text-5xl font-black text-cq-neon">404</p>
+
+            <h1 class="mt-4 text-xl font-bold text-cq-strong">Không tìm thấy trang này</h1>
+
+            <p class="mt-2 text-sm text-cq-muted">
+                Đường dẫn bạn mở không tồn tại, hoặc màn chơi đó chưa được tạo.
+            </p>
+
+            <div class="mt-6 flex flex-wrap justify-center gap-2">
+                <a href="/hub" class="cq-btn-primary">🗺️ Về bản đồ game</a>
+                <a href="/" class="cq-btn-ghost">Trang chủ</a>
+            </div>
+
+            <p id="cq-guess" class="mt-4 hidden text-xs text-cq-muted"></p>
+        </div>
+    </main>
+</GameLayout>
+
+<script is:inline>
+    // Nếu người dùng gõ /play/<game>/<số> mà màn đó chưa có, gợi ý về trang game
+    (function () {
+        var match = /^\/play\/([^/]+)\/(\d+)/.exec(window.location.pathname);
+        if (!match) return;
+
+        var el = document.getElementById('cq-guess');
+        if (!el) return;
+
+        el.innerHTML =
+            'Có phải bạn muốn vào game <a class="text-cq-neon underline" href="/games/' +
+            match[1] +
+            '">' +
+            match[1] +
+            '</a>?';
+        el.classList.remove('hidden');
+    })();
+</script>

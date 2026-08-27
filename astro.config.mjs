@@ -1,0 +1,67 @@
+// @ts-check
+import { defineConfig } from 'astro/config';
+import tailwind from '@astrojs/tailwind';
+import react from '@astrojs/react';
+
+/**
+ * CodeQuest — cấu hình build tĩnh.
+ *
+ * Toàn bộ trang được xuất ra HTML tĩnh để đẩy lên GitHub Pages / Cloudflare Pages.
+ * Dữ liệu game lấy từ API lúc chạy (PUBLIC_API_URL), nên nội dung vẫn luôn mới
+ * mà không cần máy chủ render.
+ *
+ * Biến môi trường khi build:
+ *   PUBLIC_API_URL   URL công khai của backend, VD https://api.tenmien.com/api/v1
+ *   PUBLIC_SITE_URL  URL của trang, dùng cho canonical + sitemap
+ *   PUBLIC_BASE_PATH '/' nếu chạy ở tên miền riêng; '/ten-repo' nếu chạy ở
+ *                    username.github.io/ten-repo
+ */
+const SITE = process.env.PUBLIC_SITE_URL || 'https://codequest.example.com';
+const BASE = process.env.PUBLIC_BASE_PATH || '/';
+
+export default defineConfig({
+    // ─── Integrations ──────────────────────────────────────────────────────────
+    integrations: [tailwind(), react()],
+
+    // ─── Output: tĩnh hoàn toàn ────────────────────────────────────────────────
+    // Mọi route động phải được liệt kê qua getStaticPaths (xem src/config/routes.ts)
+    output: 'static',
+
+    site: SITE,
+    base: BASE,
+
+    // Tạo thư mục riêng cho mỗi trang (/hub/index.html) để URL không cần đuôi .html
+    build: {
+        format: 'directory',
+        // Gộp CSS vào HTML, bớt một vòng request trên mạng chậm
+        inlineStylesheets: 'always',
+    },
+
+    // ─── Image Optimization ────────────────────────────────────────────────────
+    image: {
+        domains: ['images.unsplash.com', 'via.placeholder.com', 'picsum.photos'],
+    },
+
+    // ─── Vite ─────────────────────────────────────────────────────────────────
+    vite: {
+        resolve: {
+            alias: {
+                '@': '/src',
+            },
+        },
+        build: {
+            cssCodeSplit: true,
+            rollupOptions: {
+                output: {
+                    // Tách vendor để trình duyệt cache lâu dài
+                    manualChunks(id) {
+                        if (id.includes('node_modules/react-router')) return 'react-router-vendor';
+                        if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                            return 'react-vendor';
+                        }
+                    },
+                },
+            },
+        },
+    },
+});

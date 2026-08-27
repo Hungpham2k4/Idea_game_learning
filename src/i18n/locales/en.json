@@ -1,0 +1,26 @@
+{
+  "// i18next configuration goes here": "",
+  "//": "Add your English translation keys below (mirror vi.json structure).",
+  "//example": {
+    "common": {
+      "welcome": "Hello",
+      "loading": "Loading...",
+      "error": "An error occurred",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "confirm": "Confirm"
+    },
+    "nav": {
+      "home": "Home",
+      "about": "About",
+      "admin": "Admin"
+    },
+    "admin": {
+      "dashboard": "Dashboard",
+      "settings": "Settings",
+      "logout": "Log out"
+    }
+  }
+}

@@ -1,0 +1,224 @@
+---
+/**
+ * @file src/layouts/BaseLayout.astro
+ * @description Master HTML shell for all public (SSR) web pages.
+ *
+ * Provides:
+ *   ✓ SEO: title, description, canonical, Open Graph, robots meta
+ *   ✓ Schema.org Organization structured data
+ *   ✓ Web font loading (non-blocking, swap)
+ *   ✓ Astro View Transitions (ClientRouter)
+ *   ✓ Navigation progress bar for SSR page transitions
+ *   ✓ <slot /> for page content injection
+ *   ✓ Global CSS
+ *
+ * Props override SITE_CONFIG defaults — pass only what differs per page.
+ *
+ * Usage:
+ *   ---
+ *   import BaseLayout from '@/layouts/BaseLayout.astro';
+ *   ---
+ *   <BaseLayout title="My Page" description="Custom description">
+ *     <main>...</main>
+ *   </BaseLayout>
+ */
+
+import { ClientRouter } from 'astro:transitions';
+import { SITE_CONFIG } from '@/config/site';
+import '@/styles/global.css';
+
+// ─── Props ──────────────────────────────────────────────────────────────────
+
+interface Props {
+    /** Page-specific title. Appended with site name: "Page Title | Site Name" */
+    title?: string;
+    /** Page-specific meta description (max ~160 chars for SEO). */
+    description?: string;
+    /** Absolute URL for the OG image (1200×630). Falls back to SITE_CONFIG default. */
+    ogImage?: string;
+    /** Set to true on pages that should not be indexed by search engines. */
+    noindex?: boolean;
+    /** Canonical URL override. Defaults to current request URL. */
+    canonical?: string;
+    /** Ghi đè class của <body> — dùng cho trang nền tối của CodeQuest. */
+    bodyClass?: string;
+}
+
+const {
+    title,
+    description,
+    ogImage,
+    noindex = false,
+    canonical,
+    bodyClass = 'antialiased bg-white text-slate-900',
+} = Astro.props;
+
+// ─── Computed SEO Values ─────────────────────────────────────────────────────
+
+const pageTitle       = title
+    ? `${title} | ${SITE_CONFIG.name}`
+    : `${SITE_CONFIG.name} — ${SITE_CONFIG.tagline}`;
+
+const pageDescription = description || SITE_CONFIG.defaultDescription;
+const pageOgImage     = ogImage     || SITE_CONFIG.defaultOgImage;
+
+// Build canonical URL from request path, or use explicit override
+let canonicalURL: string;
+try {
+    const base = SITE_CONFIG.url.replace(/\/$/, '');
+    canonicalURL = canonical || `${base}${Astro.url.pathname}`;
+} catch {
+    canonicalURL = SITE_CONFIG.url;
+}
+
+// Schema.org Organization (update @type per project, e.g. 'LocalBusiness', 'Store')
+const schemaOrg = {
+    '@context': 'https://schema.org',
+    '@type':    'Organization',
+    name:       SITE_CONFIG.name,
+    description: pageDescription,
+    url:        canonicalURL,
+    telephone:  SITE_CONFIG.contact.phone,
+    email:      SITE_CONFIG.contact.email,
+    address: {
+        '@type':       'PostalAddress',
+        streetAddress: SITE_CONFIG.contact.address,
+    },
+};
+---
+
+<!doctype html>
+<html lang="vi" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- ── Primary SEO ──────────────────────────────────────────────── -->
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonicalURL} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- ── Open Graph ───────────────────────────────────────────────── -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:title"       content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:url"         content={canonicalURL} />
+    <meta property="og:image"       content={pageOgImage} />
+    <meta property="og:locale"      content={SITE_CONFIG.locale} />
+    <meta property="og:site_name"   content={SITE_CONFIG.name} />
+
+    <!-- ── Twitter Card ─────────────────────────────────────────────── -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content={pageTitle} />
+    <meta name="twitter:description" content={pageDescription} />
+    <meta name="twitter:image"       content={pageOgImage} />
+
+    <!-- ── Favicon ──────────────────────────────────────────────────── -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon"  href="/favicon.ico" />
+
+    <!-- ── Schema.org Structured Data ──────────────────────────────── -->
+    <script type="application/ld+json" set:html={JSON.stringify(schemaOrg)} />
+
+    <!-- ── Fonts (non-blocking) ─────────────────────────────────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        media="print"
+        onload="this.media='all'"
+    />
+    <noscript>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        />
+    </noscript>
+
+    <!-- ── Theme Color ──────────────────────────────────────────────── -->
+    <meta name="theme-color" content="#0ea5e9" />
+
+    <!-- ── Áp theme trước khi vẽ trang, tránh chớp màu ─────────────── -->
+    <script is:inline>
+        (function () {
+            try {
+                var saved = localStorage.getItem('cq_theme');
+                var theme = saved === 'light' || saved === 'dark'
+                    ? saved
+                    : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <!-- ── View Transitions (SSR-safe seamless navigation) ─────────── -->
+    <ClientRouter />
+
+    <!-- ── Navigation Progress Bar Styles ──────────────────────────── -->
+    <style is:global>
+        #nav-progress {
+            position: fixed;
+            top: 0; left: 0;
+            height: 3px;
+            width: 0;
+            z-index: 9999;
+            pointer-events: none;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+            box-shadow: 0 0 8px var(--color-primary);
+            opacity: 0;
+            transition: width 0.3s ease-out, opacity 0.2s ease;
+        }
+        #nav-progress.active { opacity: 1; }
+    </style>
+
+    <!-- Slot for page-specific <head> additions (extra preloads, meta, etc.) -->
+    <slot name="head" />
+  </head>
+
+  <body class={bodyClass}>
+
+    <!-- Navigation progress bar element -->
+    <div id="nav-progress" aria-hidden="true"></div>
+
+    <!-- ── Page Content ─────────────────────────────────────────────── -->
+    <slot />
+
+    <!-- ── Navigation Progress Bar Script ──────────────────────────── -->
+    <script is:inline>
+        (function() {
+            var bar = document.getElementById('nav-progress');
+            if (!bar) return;
+
+            document.addEventListener('astro:before-preparation', function() {
+                bar.style.width = '30%';
+                bar.classList.add('active');
+            });
+
+            document.addEventListener('astro:after-preparation', function() {
+                bar.style.width = '70%';
+            });
+
+            document.addEventListener('astro:page-load', function() {
+                bar.style.width = '100%';
+                setTimeout(function() {
+                    bar.classList.remove('active');
+                    bar.style.width = '0';
+                }, 300);
+            });
+        })();
+    </script>
+
+    <!-- ── View Transition Cleanup ──────────────────────────────────── -->
+    <script is:inline>
+        // Reset body overflow on page transition (prevents scroll lock from modals/menus)
+        document.addEventListener('astro:before-swap', function() {
+            document.body.style.overflow = '';
+        });
+    </script>
+  </body>
+</html>

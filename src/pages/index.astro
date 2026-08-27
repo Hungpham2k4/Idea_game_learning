@@ -1,0 +1,261 @@
+---
+/**
+ * @file src/pages/index.astro
+ * @description Trang giới thiệu CodeQuest (public, SSR, có SEO).
+ *
+ * Danh sách game được lấy trực tiếp từ API lúc render. Nếu backend chưa chạy,
+ * trang vẫn hiển thị bình thường với danh sách dự phòng.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE_CONFIG } from '@/config/site';
+import ThemeToggle from '@/components/game/ThemeToggle';
+import TechOrbit from '@/components/web/TechOrbit.astro';
+
+const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8080/api/v1';
+
+interface GameCard {
+    slug: string;
+    title: string;
+    subtitle: string;
+    icon: string;
+    color: string;
+    subject: string;
+    difficulty: string;
+    totalLevels: number;
+}
+
+// Build tĩnh: thử lấy danh sách game lúc build cho luôn mới; backend không bật
+// thì dùng danh sách dự phòng bên dưới. Dù đường nào trang cũng build được,
+// không bao giờ chặn việc deploy.
+let games: GameCard[] = [];
+let apiOnline = false;
+
+try {
+    const res = await fetch(`${API_BASE}/games`, { signal: AbortSignal.timeout(2500) });
+    if (res.ok) {
+        const json = await res.json();
+        games = json?.data ?? [];
+        apiOnline = games.length > 0;
+    }
+} catch {
+    // Không sao — dùng danh sách tĩnh
+}
+
+if (games.length === 0) {
+    games = [
+        { slug: 'code-dungeon', title: 'Code Dungeon', subtitle: 'Gõ lệnh để bước đi', icon: '🗡️', color: '#8b5cf6', subject: 'JS', difficulty: 'EASY', totalLevels: 5 },
+        { slug: 'sql-kingdom', title: 'SQL Kingdom', subtitle: 'Truy vấn điều khiển vương quốc', icon: '👑', color: '#f59e0b', subject: 'SQL', difficulty: 'EASY', totalLevels: 5 },
+        { slug: 'linux-hacker', title: 'Linux Hacker', subtitle: 'Cả hệ thống sau một dấu nhắc lệnh', icon: '💻', color: '#22c55e', subject: 'LINUX', difficulty: 'MEDIUM', totalLevels: 5 },
+        { slug: 'sql-restaurant', title: 'SQL Restaurant', subtitle: 'Quản lý nhà hàng bằng truy vấn', icon: '🍜', color: '#ef4444', subject: 'SQL', difficulty: 'MEDIUM', totalLevels: 5 },
+        { slug: 'git-time-machine', title: 'Git Time Machine', subtitle: 'Du hành ngược lịch sử commit', icon: '⏳', color: '#f97316', subject: 'GIT', difficulty: 'MEDIUM', totalLevels: 5 },
+        { slug: 'java-robot', title: 'Java Robot Factory', subtitle: 'Lập trình robot bằng Java', icon: '🤖', color: '#0ea5e9', subject: 'JAVA', difficulty: 'MEDIUM', totalLevels: 5 },
+        { slug: 'database-detective', title: 'Database Detective', subtitle: 'Phá án bằng SQL', icon: '🕵️', color: '#6366f1', subject: 'SQL', difficulty: 'HARD', totalLevels: 5 },
+        { slug: 'sql-battle', title: 'SQL Battle Arena', subtitle: 'Đấu trường của truy vấn', icon: '⚔️', color: '#dc2626', subject: 'SQL', difficulty: 'HARD', totalLevels: 5 },
+        { slug: 'code-tower-defense', title: 'Code Tower Defense', subtitle: 'Xây tháp bằng vòng lặp', icon: '🗼', color: '#14b8a6', subject: 'JAVA', difficulty: 'HARD', totalLevels: 5 },
+        { slug: 'devops-survival', title: 'DevOps Survival', subtitle: 'Cứu server lúc 3 giờ sáng', icon: '🚨', color: '#e11d48', subject: 'DEVOPS', difficulty: 'HARD', totalLevels: 5 },
+    ];
+}
+
+const totalLevels = games.reduce((sum, g) => sum + (g.totalLevels ?? 0), 0);
+
+const flow = [
+    { step: '01', title: 'Nhập lệnh', desc: 'Sinh viên gõ SQL, lệnh Linux, git hoặc code Java — không có nút mũi tên nào để bấm.' },
+    { step: '02', title: 'Máy chủ phân tích', desc: 'Engine tự viết sẽ phân tích cú pháp, kiểm tra tính hợp lệ và chạy trên thế giới ảo của màn chơi.' },
+    { step: '03', title: 'Thế giới phản ứng', desc: 'Nhân vật bước đi, quái mất máu, dịch vụ sống lại — đúng theo dữ liệu vừa thay đổi.' },
+    { step: '04', title: 'Nhận phản hồi', desc: 'Sai ở đâu, vì sao sai, nên sửa thế nào. Đúng thì nhận sao, XP và mở khoá màn tiếp theo.' },
+];
+---
+
+<BaseLayout
+    title={SITE_CONFIG.name}
+    description={SITE_CONFIG.defaultDescription}
+    bodyClass="cq-page antialiased"
+>
+    <!-- ── Thanh điều hướng ─────────────────────────────────────────────── -->
+    <header class="sticky top-0 z-40 border-b border-cq-line bg-cq-bg/85 backdrop-blur">
+        <div class="container-site flex h-14 items-center gap-4">
+            <a href="/" class="flex items-center gap-2">
+                <span class="grid h-8 w-8 place-items-center rounded-lg bg-cq-neon font-mono text-lg font-bold text-cq-onaccent">
+                    &gt;_
+                </span>
+                <span class="text-base font-extrabold tracking-tight text-cq-strong">
+                    Code<span class="text-cq-neon">Quest</span>
+                </span>
+            </a>
+
+            <nav class="ml-auto flex items-center gap-2">
+                <a href="/hub" class="hidden rounded-lg px-3 py-1.5 text-sm text-cq-muted hover:text-cq-strong sm:block">
+                    Bản đồ game
+                </a>
+                <a href="/leaderboard" class="hidden rounded-lg px-3 py-1.5 text-sm text-cq-muted hover:text-cq-strong sm:block">
+                    Xếp hạng
+                </a>
+                <ThemeToggle client:load />
+                <a href="/login" class="cq-btn-ghost !px-3 !py-1.5 text-xs">Đăng nhập</a>
+                <a href="/register" class="cq-btn-primary !px-3 !py-1.5 text-xs">Chơi ngay</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ── Hero ─────────────────────────────────────────────────────────── -->
+    <section class="cq-grid-bg relative overflow-hidden border-b border-cq-line">
+        <!-- Logo các ngôn ngữ bay lơ lửng phía sau nội dung -->
+        <TechOrbit />
+
+        <div class="container-site relative z-10 py-16 sm:py-24">
+            <div class="grid items-center gap-12 lg:grid-cols-2">
+                <div>
+                    <span class="cq-chip !border-cq-neon/40 !text-cq-neon">
+                        <span class="h-1.5 w-1.5 rounded-full bg-cq-neon"></span>
+                        {games.length} game · {totalLevels} màn chơi
+                    </span>
+
+                    <h1 class="mt-5 text-4xl font-black leading-tight tracking-tight text-cq-strong sm:text-5xl">
+                        Không dùng chuột.<br />
+                        Không spam phím.<br />
+                        <span class="text-cq-neon">Muốn thắng phải biết code.</span>
+                    </h1>
+
+                    <p class="mt-5 max-w-xl text-base leading-relaxed text-cq-muted">
+                        CodeQuest biến SQL, Linux, Git và Java thành cơ chế điều khiển game.
+                        Sinh viên gõ đúng câu lệnh thì nhân vật mới đi, quái mới chết, server mới sống lại.
+                    </p>
+
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        <a href="/register" class="cq-btn-primary">Bắt đầu miễn phí →</a>
+                        <a href="/hub" class="cq-btn-ghost">Xem bản đồ game</a>
+                    </div>
+
+                    <p class="mt-4 text-xs text-cq-muted">
+                        Miễn phí cho sinh viên · {games.length} game · {totalLevels} màn chơi · không cần cài đặt gì
+                    </p>
+                </div>
+
+                <!-- Khung mô phỏng terminal -->
+                <div class="cq-panel overflow-hidden">
+                    <div class="flex items-center gap-1.5 border-b border-cq-line px-4 py-2.5">
+                        <span class="h-2.5 w-2.5 rounded-full bg-rose-500/70"></span>
+                        <span class="h-2.5 w-2.5 rounded-full bg-amber-500/70"></span>
+                        <span class="h-2.5 w-2.5 rounded-full bg-emerald-500/70"></span>
+                        <span class="ml-2 font-mono text-xs text-cq-muted">code-dungeon — màn 5</span>
+                    </div>
+
+                    <pre class="overflow-x-auto p-4 font-mono text-[13px] leading-relaxed"><span class="text-cq-muted"># Nhân vật không nghe bàn phím. Nó nghe code.</span>
+<span class="text-cq-neon">while</span> (!atExit()) {'{'}
+    <span class="text-cq-neon">if</span> (canMove(<span class="text-emerald-300">"RIGHT"</span>)) {'{'}
+        move(<span class="text-emerald-300">"RIGHT"</span>);
+    {'}'} <span class="text-cq-neon">else</span> {'{'}
+        move(<span class="text-emerald-300">"DOWN"</span>);
+    {'}'}
+{'}'}
+
+<span class="text-cq-lime">▸ Đi sang phải → (1, 0)</span>
+<span class="text-cq-lime">▸ Đi xuống → (1, 1)</span>
+<span class="text-cq-lime">▸ Đã nhặt Ngọc lửa.</span>
+<span class="text-cq-gold">🏁 Hoàn thành · ★★★ · +200 XP</span>
+<span class="text-cq-neon">🔓 Mở khoá: SQL Kingdom</span></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Cơ chế ───────────────────────────────────────────────────────── -->
+    <section class="border-b border-cq-line">
+        <div class="container-site py-16">
+            <h2 class="text-center text-2xl font-extrabold text-cq-strong sm:text-3xl">Một vòng chơi diễn ra thế nào</h2>
+            <p class="mx-auto mt-2 max-w-2xl text-center text-sm text-cq-muted">
+                Không chấm bằng quiz trắc nghiệm. Câu lệnh của sinh viên được phân tích và thực thi thật
+                trên thế giới ảo của màn chơi — an toàn tuyệt đối vì engine do hệ thống tự viết.
+            </p>
+
+            <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {flow.map((f) => (
+                    <div class="cq-panel p-5">
+                        <span class="font-mono text-2xl font-black text-cq-neon/30">{f.step}</span>
+                        <h3 class="mt-1 text-base font-bold text-cq-strong">{f.title}</h3>
+                        <p class="mt-1.5 text-sm leading-relaxed text-cq-muted">{f.desc}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Danh sách game ───────────────────────────────────────────────── -->
+    <section class="border-b border-cq-line">
+        <div class="container-site py-16">
+            <h2 class="text-2xl font-extrabold text-cq-strong sm:text-3xl">{games.length} game, một lộ trình</h2>
+            <p class="mt-2 max-w-2xl text-sm text-cq-muted">
+                Mỗi game khoá lại cho tới khi bạn đủ sao ở game trước. Thứ tự này chính là lộ trình học:
+                từ câu lệnh đơn giản, tới truy vấn dữ liệu, rồi xử lý sự cố hệ thống thật.
+            </p>
+
+            <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {games.map((g, i) => (
+                    <article
+                        class="cq-panel p-5 transition-transform duration-200 hover:-translate-y-0.5"
+                        style={`box-shadow: inset 3px 0 0 ${g.color}`}
+                    >
+                        <div class="flex items-start gap-3">
+                            <span
+                                class="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-2xl"
+                                style={`background-color: ${g.color}22`}
+                            >
+                                {g.icon}
+                            </span>
+                            <div class="min-w-0">
+                                <p class="font-mono text-[11px] text-cq-muted">#{String(i + 1).padStart(2, '0')}</p>
+                                <h3 class="truncate text-base font-bold text-cq-strong">{g.title}</h3>
+                                <p class="mt-0.5 line-clamp-2 text-xs text-cq-muted">{g.subtitle}</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex flex-wrap gap-1.5">
+                            <span class="cq-chip">{g.subject}</span>
+                            <span class="cq-chip">{g.totalLevels} màn</span>
+                        </div>
+                    </article>
+                ))}
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Dành cho giảng viên ──────────────────────────────────────────── -->
+    <section class="border-b border-cq-line">
+        <div class="container-site grid gap-8 py-16 lg:grid-cols-2">
+            <div>
+                <h2 class="text-2xl font-extrabold text-cq-strong">Giảng viên nhìn thấy gì?</h2>
+                <ul class="mt-4 space-y-2.5 text-sm text-cq-muted">
+                    <li>✓ Ai đang tắc ở màn nào, nộp bao nhiêu lần, sai kiểu gì.</li>
+                    <li>✓ Bảng xếp hạng theo lớp để tạo động lực thi đua.</li>
+                    <li>✓ Tự tạo màn chơi mới: viết đề, cấu hình dữ liệu, đặt mục tiêu chấm điểm.</li>
+                    <li>✓ Nút "chạy thử đáp án mẫu" ngay trong trang quản trị để kiểm tra màn mới có giải được không.</li>
+                </ul>
+                <a href="/admin" class="cq-btn-ghost mt-6">Vào khu vực quản trị →</a>
+            </div>
+
+            <div class="cq-panel p-5">
+                <p class="mb-3 text-xs font-bold uppercase tracking-wider text-cq-muted">Ví dụ một mục tiêu chấm điểm</p>
+                <pre class="cq-terminal text-[12px] text-cq-text/85">{`{
+  "id": "match",
+  "label": "Tìm đúng 3 chiến binh tinh nhuệ",
+  "check": { "kind": "resultMatches" }
+},
+{
+  "id": "where",
+  "label": "Bắt buộc dùng WHERE",
+  "check": { "kind": "usesClause", "clause": "WHERE" }
+}`}</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Chân trang ───────────────────────────────────────────────────── -->
+    <footer class="py-10">
+        <div class="container-site text-center text-sm text-cq-muted">
+            <p class="font-semibold text-cq-strong">{SITE_CONFIG.name}</p>
+            <p class="mt-1">{SITE_CONFIG.tagline}</p>
+            <p class="mt-4 text-xs text-cq-muted">
+                &copy; {new Date().getFullYear()} · Astro SSR + NestJS · Engine SQL/Shell/Git/Script tự viết
+            </p>
+        </div>
+    </footer>
+</BaseLayout>

@@ -1,0 +1,25 @@
+---
+/**
+ * @file src/pages/login.astro
+ * @description Trang đăng nhập.
+ */
+import GameLayout from '@/layouts/GameLayout.astro';
+import AuthForm from '@/components/game/AuthForm';
+---
+
+<GameLayout title="Đăng nhập" bare>
+    <main class="cq-grid-bg flex min-h-screen items-center justify-center px-4 py-10">
+        <div class="w-full max-w-md">
+            <a href="/" class="mb-6 flex items-center justify-center gap-2">
+                <span class="grid h-9 w-9 place-items-center rounded-lg bg-cq-neon font-mono text-lg font-bold text-slate-950">
+                    &gt;_
+                </span>
+                <span class="text-xl font-extrabold tracking-tight text-white">
+                    Code<span class="text-cq-neon">Quest</span>
+                </span>
+            </a>
+
+            <AuthForm mode="login" client:load />
+        </div>
+    </main>
+</GameLayout>

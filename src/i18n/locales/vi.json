@@ -1,0 +1,26 @@
+{
+  "// i18next configuration goes here": "",
+  "//": "Add your Vietnamese translation keys below.",
+  "//example": {
+    "common": {
+      "welcome": "Xin chào",
+      "loading": "Đang tải...",
+      "error": "Đã có lỗi xảy ra",
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "delete": "Xóa",
+      "edit": "Chỉnh sửa",
+      "confirm": "Xác nhận"
+    },
+    "nav": {
+      "home": "Trang chủ",
+      "about": "Giới thiệu",
+      "admin": "Quản trị"
+    },
+    "admin": {
+      "dashboard": "Bảng điều khiển",
+      "settings": "Cài đặt",
+      "logout": "Đăng xuất"
+    }
+  }
+}

@@ -1,0 +1,194 @@
+---
+/**
+ * @file src/components/web/TechOrbit.astro
+ * @description Các huy hiệu ngôn ngữ / công nghệ bay lơ lửng quanh khu vực hero.
+ *
+ * Toàn bộ là SVG viết tay + CSS, không tải asset ngoài và không cần JavaScript —
+ * quan trọng khi deploy lên nền tảng edge như Cloudflare.
+ *
+ * Ba lớp chiều sâu: `back` mờ và nhoè, `mid` vừa, `front` rõ nét.
+ */
+
+interface Chip {
+    name: string;
+    /** Màu thương hiệu */
+    color: string;
+    /** Vị trí theo phần trăm khung */
+    top: string;
+    left: string;
+    layer: 'back' | 'mid' | 'front';
+    /** Lệch nhịp để không con nào bay giống con nào */
+    delay: string;
+    duration: string;
+    size: number;
+}
+
+const chips: Chip[] = [
+    { name: 'sql',    color: '#f59e0b', top: '8%',  left: '4%',  layer: 'front', delay: '0s',   duration: '7s',  size: 56 },
+    { name: 'java',   color: '#f89820', top: '62%', left: '2%',  layer: 'mid',   delay: '1.2s', duration: '9s',  size: 48 },
+    { name: 'js',     color: '#f7df1e', top: '18%', left: '88%', layer: 'front', delay: '0.6s', duration: '8s',  size: 52 },
+    { name: 'python', color: '#3776ab', top: '74%', left: '86%', layer: 'mid',   delay: '2.1s', duration: '10s', size: 50 },
+    { name: 'git',    color: '#f05033', top: '84%', left: '20%', layer: 'front', delay: '1.8s', duration: '8.5s', size: 44 },
+    { name: 'linux',  color: '#22c55e', top: '38%', left: '93%', layer: 'back',  delay: '0.9s', duration: '11s', size: 42 },
+    { name: 'docker', color: '#2496ed', top: '6%',  left: '52%', layer: 'back',  delay: '2.6s', duration: '12s', size: 40 },
+    { name: 'ts',     color: '#3178c6', top: '88%', left: '62%', layer: 'back',  delay: '1.4s', duration: '10.5s', size: 38 },
+    { name: 'csharp', color: '#9b4f96', top: '30%', left: '-2%', layer: 'back',  delay: '3.1s', duration: '11.5s', size: 36 },
+    { name: 'html',   color: '#e34f26', top: '52%', left: '78%', layer: 'back',  delay: '0.3s', duration: '9.5s', size: 34 },
+];
+
+const LAYER_CLASS: Record<Chip['layer'], string> = {
+    back: 'opacity-25 blur-[1.5px]',
+    mid: 'opacity-50',
+    front: 'opacity-80',
+};
+---
+
+<div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+    {
+        chips.map((chip) => (
+            <div
+                class={`cq-float absolute grid place-items-center rounded-2xl border backdrop-blur-sm ${LAYER_CLASS[chip.layer]}`}
+                style={`
+                    top: ${chip.top};
+                    left: ${chip.left};
+                    width: ${chip.size}px;
+                    height: ${chip.size}px;
+                    animation-delay: ${chip.delay};
+                    animation-duration: ${chip.duration};
+                    border-color: ${chip.color}55;
+                    background-color: ${chip.color}18;
+                    box-shadow: 0 0 24px ${chip.color}22;
+                `}
+            >
+                {/* ── SQL: khối trụ cơ sở dữ liệu ─────────────────────────── */}
+                {chip.name === 'sql' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.55} height={chip.size * 0.55} fill="none">
+                        <ellipse cx="12" cy="5.5" rx="7.5" ry="3" stroke={chip.color} stroke-width="1.6" />
+                        <path d="M4.5 5.5v13c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-13" stroke={chip.color} stroke-width="1.6" />
+                        <path d="M4.5 12c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3" stroke={chip.color} stroke-width="1.6" />
+                    </svg>
+                )}
+
+                {/* ── Java: tách cà phê bốc khói ──────────────────────────── */}
+                {chip.name === 'java' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.55} height={chip.size * 0.55} fill="none">
+                        <path d="M4 11h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-5Z" stroke={chip.color} stroke-width="1.6" />
+                        <path d="M16 12.5h1.5a2.5 2.5 0 0 1 0 5H16" stroke={chip.color} stroke-width="1.6" />
+                        <path d="M8.5 7.5c1.5-1.2-.8-2 .5-3.5M12 7.5c1.5-1.2-.8-2 .5-3.5" stroke={chip.color} stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                )}
+
+                {/* ── JavaScript: khối vuông chữ JS ───────────────────────── */}
+                {chip.name === 'js' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.58} height={chip.size * 0.58}>
+                        <rect x="2.5" y="2.5" width="19" height="19" rx="3" stroke={chip.color} stroke-width="1.6" fill="none" />
+                        <text x="12" y="16.5" text-anchor="middle" font-size="9" font-weight="800" font-family="monospace" fill={chip.color}>
+                            JS
+                        </text>
+                    </svg>
+                )}
+
+                {/* ── Python: hai con rắn lồng nhau (đơn giản hoá) ────────── */}
+                {chip.name === 'python' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.55} height={chip.size * 0.55} fill="none">
+                        <path d="M12 2.5c-3 0-5 1-5 3v2.5h5.5v1H5.5c-2 0-3 1.5-3 4s1 4 3 4H7v-3c0-2 1.5-3.5 3.5-3.5H14" stroke={chip.color} stroke-width="1.5" stroke-linejoin="round" />
+                        <path d="M12 21.5c3 0 5-1 5-3V16h-5.5v-1H18.5c2 0 3-1.5 3-4s-1-4-3-4H17v3c0 2-1.5 3.5-3.5 3.5H10" stroke={chip.color} stroke-width="1.5" stroke-linejoin="round" opacity="0.7" />
+                    </svg>
+                )}
+
+                {/* ── Git: nhánh commit ───────────────────────────────────── */}
+                {chip.name === 'git' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.55} height={chip.size * 0.55} fill="none">
+                        <circle cx="6.5" cy="5" r="2.2" stroke={chip.color} stroke-width="1.6" />
+                        <circle cx="6.5" cy="19" r="2.2" stroke={chip.color} stroke-width="1.6" />
+                        <circle cx="17.5" cy="12" r="2.2" stroke={chip.color} stroke-width="1.6" />
+                        <path d="M6.5 7.2v9.6M8.7 12h6.6" stroke={chip.color} stroke-width="1.6" stroke-linecap="round" />
+                        <path d="M6.5 12a5 5 0 0 0 5-5" stroke={chip.color} stroke-width="1.4" opacity="0.6" />
+                    </svg>
+                )}
+
+                {/* ── Linux: cửa sổ terminal ──────────────────────────────── */}
+                {chip.name === 'linux' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.55} height={chip.size * 0.55} fill="none">
+                        <rect x="2.5" y="4" width="19" height="16" rx="2.5" stroke={chip.color} stroke-width="1.6" />
+                        <path d="M2.5 8h19" stroke={chip.color} stroke-width="1.4" />
+                        <path d="M6 12l2.5 2.5L6 17M11 17h5" stroke={chip.color} stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                )}
+
+                {/* ── Docker: chồng container ─────────────────────────────── */}
+                {chip.name === 'docker' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.55} height={chip.size * 0.55} fill="none">
+                        <rect x="3" y="11" width="4" height="4" stroke={chip.color} stroke-width="1.4" />
+                        <rect x="8" y="11" width="4" height="4" stroke={chip.color} stroke-width="1.4" />
+                        <rect x="13" y="11" width="4" height="4" stroke={chip.color} stroke-width="1.4" />
+                        <rect x="8" y="6.5" width="4" height="4" stroke={chip.color} stroke-width="1.4" />
+                        <path d="M3 17c3.5 3 12 3 16.5-2 1.5 0 2.5-.5 2.5-.5" stroke={chip.color} stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                )}
+
+                {/* ── TypeScript ──────────────────────────────────────────── */}
+                {chip.name === 'ts' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.58} height={chip.size * 0.58}>
+                        <rect x="2.5" y="2.5" width="19" height="19" rx="3" stroke={chip.color} stroke-width="1.6" fill="none" />
+                        <text x="12" y="16.5" text-anchor="middle" font-size="9" font-weight="800" font-family="monospace" fill={chip.color}>
+                            TS
+                        </text>
+                    </svg>
+                )}
+
+                {/* ── C# ──────────────────────────────────────────────────── */}
+                {chip.name === 'csharp' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.6} height={chip.size * 0.6}>
+                        <circle cx="12" cy="12" r="9.5" stroke={chip.color} stroke-width="1.6" fill="none" />
+                        <text x="12" y="16" text-anchor="middle" font-size="9" font-weight="800" font-family="monospace" fill={chip.color}>
+                            C#
+                        </text>
+                    </svg>
+                )}
+
+                {/* ── HTML5: khiên ────────────────────────────────────────── */}
+                {chip.name === 'html' && (
+                    <svg viewBox="0 0 24 24" width={chip.size * 0.58} height={chip.size * 0.58} fill="none">
+                        <path d="M4 3h16l-1.5 16L12 21l-6.5-2L4 3Z" stroke={chip.color} stroke-width="1.5" stroke-linejoin="round" />
+                        <text x="12" y="15" text-anchor="middle" font-size="7.5" font-weight="800" font-family="monospace" fill={chip.color}>
+                            5
+                        </text>
+                    </svg>
+                )}
+            </div>
+        ))
+    }
+</div>
+
+<style>
+    /* Bay lơ lửng: nhấp nhô kèm xoay nhẹ, mỗi huy hiệu một nhịp riêng */
+    .cq-float {
+        animation-name: cqFloatOrbit;
+        animation-timing-function: ease-in-out;
+        animation-iteration-count: infinite;
+        will-change: transform;
+    }
+
+    @keyframes cqFloatOrbit {
+        0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
+        25%  { transform: translate3d(10px, -16px, 0) rotate(4deg); }
+        50%  { transform: translate3d(-6px, -26px, 0) rotate(-3deg); }
+        75%  { transform: translate3d(-12px, -12px, 0) rotate(3deg); }
+        100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    }
+
+    /* Tôn trọng người dùng tắt hiệu ứng chuyển động */
+    @media (prefers-reduced-motion: reduce) {
+        .cq-float {
+            animation: none;
+        }
+    }
+
+    /* Màn hình hẹp: bớt huy hiệu cho đỡ rối */
+    @media (max-width: 640px) {
+        .cq-float:nth-child(n + 5) {
+            display: none;
+        }
+    }
+</style>
