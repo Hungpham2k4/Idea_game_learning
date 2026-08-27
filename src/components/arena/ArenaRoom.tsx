@@ -191,7 +191,7 @@ const ArenaRoom: React.FC = () => {
     return (
         <div className="mx-auto w-full max-w-[1500px]">
             {/* ── Thanh trạng thái ───────────────────────────────────────── */}
-            <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-cq-line bg-cq-panel p-3">
+            <div className="mb-4 flex flex-wrap items-center gap-3 cq-glass p-3">
                 <span className="rounded-lg bg-cq-neon/15 px-3 py-1.5 font-mono text-lg font-bold tracking-[0.25em] text-cq-neon">
                     {roomCode}
                 </span>
@@ -239,7 +239,7 @@ const ArenaRoom: React.FC = () => {
                         <LobbyPanel state={state} isHost={isHost} onStart={() => emit('room:start')} onReady={(r) => emit('room:ready', { ready: r })} meId={me?.id} />
                     ) : (
                         <>
-                            <div className="flex items-center gap-3 rounded-2xl border border-cq-line bg-cq-panel px-4 py-2.5">
+                            <div className="flex items-center gap-3 cq-glass px-4 py-2.5">
                                 <span className="text-sm font-bold text-cq-strong">
                                     Lượt {state?.round}/{state?.totalRounds}
                                 </span>
@@ -271,7 +271,7 @@ const ArenaRoom: React.FC = () => {
 
                 {/* ══ Cột phải: viết code ═════════════════════════════════ */}
                 <div className="space-y-4">
-                    <div className="rounded-2xl border border-cq-line bg-cq-panel">
+                    <div className="cq-glass">
                         <div className="flex items-center gap-2 border-b border-cq-line px-4 py-2.5">
                             <span className="text-sm font-bold text-cq-strong">Chương trình lượt này</span>
                             <button
@@ -314,14 +314,14 @@ const ArenaRoom: React.FC = () => {
                     {showDocs && <ArenaDocsPanel onInsert={(s) => setCode((c) => `${c}\n${s}`)} />}
 
                     {state?.map.briefing && phase === 'lobby' && (
-                        <div className="rounded-2xl border border-cq-line bg-cq-panel p-4">
+                        <div className="cq-glass p-4">
                             <p className="mb-2 text-sm font-bold text-cq-strong">Chiến thuật gợi ý</p>
                             <p className="whitespace-pre-line text-xs leading-relaxed text-cq-dim">{state.map.briefing}</p>
                         </div>
                     )}
 
                     {/* Nhật ký trận đấu */}
-                    <div className="rounded-2xl border border-cq-line bg-cq-panel">
+                    <div className="cq-glass">
                         <p className="border-b border-cq-line px-4 py-2.5 text-sm font-bold text-cq-strong">
                             Nhật ký trận đấu
                         </p>
@@ -375,7 +375,7 @@ const LobbyPanel: React.FC<{
 }> = ({ state, isHost, meId, onStart, onReady }) => {
     if (!state) {
         return (
-            <div className="grid h-64 place-items-center rounded-2xl border border-cq-line bg-cq-panel text-sm text-cq-dim">
+            <div className="grid h-64 place-items-center cq-glass text-sm text-cq-dim">
                 Đang vào phòng…
             </div>
         );
@@ -385,7 +385,7 @@ const LobbyPanel: React.FC<{
     const enough = state.seats.length >= state.map.minPlayers;
 
     return (
-        <div className="rounded-2xl border border-cq-line bg-cq-panel p-5">
+        <div className="cq-glass p-5">
             <p className="text-lg font-extrabold text-cq-strong">Sảnh chờ</p>
             <p className="mt-1 text-sm text-cq-dim">
                 {MODE_HINT[state.map.mode]} · {state.map.width}×{state.map.height} · {state.map.totalRounds} lượt ·{' '}
@@ -462,7 +462,7 @@ const StandingsTable: React.FC<{ standings: any[]; meId?: string; mode?: string 
     const sorted = [...standings].sort((a, b) => b.score - a.score);
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-cq-line bg-cq-panel">
+        <div className="overflow-hidden cq-glass">
             <p className="border-b border-cq-line px-4 py-2.5 text-sm font-bold text-cq-strong">Bảng điểm</p>
             <table className="w-full text-sm">
                 <thead className="text-[11px] uppercase tracking-wide text-cq-dim">
@@ -512,7 +512,7 @@ const StandingsTable: React.FC<{ standings: any[]; meId?: string; mode?: string 
 
 const FinalOverlay: React.FC<{ ranking: any[]; meId?: string; matchId?: string }> = ({ ranking, meId, matchId }) => (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-md rounded-2xl border border-cq-line bg-cq-panel p-6">
+        <div className="w-full max-w-md cq-glass p-6">
             <p className="text-center text-2xl font-black text-cq-strong">Kết thúc trận</p>
 
             <div className="mt-5 space-y-2">

@@ -4,6 +4,9 @@
  * This file is imported in BaseLayout.astro and AdminApp.tsx.
  */
 
+/* Bộ công cụ thị giác dùng chung — phải đứng trước @tailwind theo chuẩn CSS */
+@import './motion.css';
+
 /* ─── Tailwind Directives ──────────────────────────────────────────────────── */
 @tailwind base;
 @tailwind components;
@@ -191,8 +194,8 @@
     --cq-onaccent: 2 6 23;
 
     /* Vệt sáng nền trang */
-    --cq-glow-1: rgba(56, 189, 248, 0.10);
-    --cq-glow-2: rgba(168, 85, 247, 0.10);
+    --cq-glow-1: rgba(56, 189, 248, 0.17);
+    --cq-glow-2: rgba(168, 85, 247, 0.14);
 }
 
 /* Theme sáng — chữ đậm hơn, nền trắng, màu nhấn tối lại cho đủ tương phản */
@@ -226,8 +229,14 @@
     }
 
     /* Thẻ / panel */
+    /* Dùng ở 71 chỗ trong dự án. Nâng cấp ngay tại đây thì cả trang có chiều sâu
+       mà không phải sửa từng file — và không chỗ nào bị bỏ sót. */
     .cq-panel {
-        @apply rounded-xl border border-cq-line bg-cq-panel/80 backdrop-blur-sm;
+        @apply relative rounded-xl border border-cq-line backdrop-blur-sm;
+        background: linear-gradient(180deg, rgb(var(--cq-panel) / 0.92), rgb(var(--cq-panel) / 0.7));
+        box-shadow:
+            inset 0 1px 0 0 rgb(255 255 255 / 0.045),
+            0 14px 34px -22px rgb(2 6 23 / 0.5);
     }
     .cq-panel-head {
         @apply flex items-center justify-between gap-3 border-b border-cq-line px-4 py-2.5
@@ -240,8 +249,35 @@
                text-sm font-semibold transition-colors duration-150
                focus:outline-none focus:ring-2 focus:ring-cq-neon/60 disabled:cursor-not-allowed disabled:opacity-50;
     }
+    /* Nút chính: quầng sáng theo màu nhấn + nhấc nhẹ khi rê chuột. Đây là nút
+       người chơi bấm nhiều nhất, đáng để nó có phản hồi rõ ràng. */
     .cq-btn-primary {
-        @apply cq-btn bg-cq-neon text-cq-onaccent hover:opacity-90;
+        @apply cq-btn relative overflow-hidden bg-cq-neon text-cq-onaccent;
+        box-shadow: 0 8px 22px -10px rgb(var(--cq-neon) / 0.75);
+        transition:
+            transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            box-shadow 180ms ease,
+            filter 180ms ease;
+    }
+    .cq-btn-primary:hover:not(:disabled) {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
+        box-shadow: 0 14px 30px -12px rgb(var(--cq-neon) / 0.9);
+    }
+    .cq-btn-primary:active:not(:disabled) {
+        transform: translateY(0);
+    }
+    /* Vệt sáng lướt qua mặt nút */
+    .cq-btn-primary::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.35) 50%, transparent 65%);
+        transform: translateX(-130%);
+        transition: transform 640ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .cq-btn-primary:hover:not(:disabled)::after {
+        transform: translateX(130%);
     }
     .cq-btn-success {
         @apply cq-btn bg-cq-lime text-cq-onaccent hover:opacity-90;

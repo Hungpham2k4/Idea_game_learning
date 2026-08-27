@@ -33,8 +33,14 @@ export default defineConfig({
     // Tạo thư mục riêng cho mỗi trang (/hub/index.html) để URL không cần đuôi .html
     build: {
         format: 'directory',
-        // Gộp CSS vào HTML, bớt một vòng request trên mạng chậm
-        inlineStylesheets: 'always',
+        // 'auto' = nhúng thẳng những tệp CSS nhỏ, còn tệp lớn thì tách ra file riêng.
+        //
+        // Trước đây để 'always' cho đỡ một vòng request. Nhưng dự án có 142 trang,
+        // mà bảng màu + hiệu ứng chung đã lên hơn 100KB — nhúng thẳng nghĩa là
+        // chép ngần ấy vào MỖI trang, và trình duyệt không cache lại được giữa
+        // các trang. Tách ra một tệp dùng chung: tốn thêm đúng một request ở
+        // lần vào đầu tiên, đổi lại mọi trang sau đó đều lấy từ cache.
+        inlineStylesheets: 'auto',
     },
 
     // ─── Image Optimization ────────────────────────────────────────────────────

@@ -44,7 +44,7 @@ const Leaderboard: React.FC = () => {
     }
 
     return (
-        <div className="mx-auto max-w-4xl px-4 py-8">
+        <div className="mx-auto max-w-5xl px-4 py-8">
             {/* ── Bộ lọc ──────────────────────────────────────────────────── */}
             <div className="mb-5 flex flex-wrap items-center gap-2">
                 {(
@@ -109,7 +109,13 @@ const Leaderboard: React.FC = () => {
                         Chưa có ai trong bảng này. Hãy là người đầu tiên!
                     </p>
                 ) : (
-                    <table className="w-full text-sm">
+                    <>
+                        {/* Bục ba người dẫn đầu. Một bảng dài toàn chữ thì ai
+                            cũng như ai — tách top 3 ra mới thấy được phần thưởng
+                            của việc dẫn đầu, và đó là thứ giữ người chơi quay lại. */}
+                        {rows.length >= 3 && <Podium rows={rows.slice(0, 3)} />}
+
+                        <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-cq-line text-left text-[11px] uppercase tracking-wider text-cq-muted">
                                 <th className="px-4 py-2 font-semibold">#</th>
@@ -121,12 +127,15 @@ const Leaderboard: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.map((r) => (
+                            {rows.map((r, i) => (
                                 <tr
                                     key={r.userId}
-                                    className={`border-b border-cq-line/60 last:border-0 ${
-                                        r.isMe ? 'bg-cq-neon/10' : 'hover:bg-cq-raised/40'
+                                    className={`animate-cq-rise border-b border-cq-line/50 transition-colors last:border-0 ${
+                                        r.isMe
+                                            ? 'bg-cq-neon/10 shadow-[inset_3px_0_0_rgb(var(--cq-neon))]'
+                                            : 'hover:bg-cq-neon/5'
                                     }`}
+                                    style={{ '--d': `${Math.min(i, 14) * 35}ms` } as React.CSSProperties}
                                 >
                                     <td className="px-4 py-2.5 font-mono text-cq-muted">
                                         {r.rank <= 3 ? <span className="text-lg">{MEDALS[r.rank - 1]}</span> : r.rank}
@@ -143,11 +152,22 @@ const Leaderboard: React.FC = () => {
                                     </td>
                                     <td className="px-2 py-2.5 text-right font-mono text-cq-neon">{r.level}</td>
                                     <td className="px-2 py-2.5 text-right font-mono text-cq-gold">★ {r.stars}</td>
-                                    <td className="px-4 py-2.5 text-right font-mono font-semibold text-cq-strong">{r.xp}</td>
+                                    <td className="px-4 py-2.5 text-right">
+                                        <span className="font-mono font-semibold text-cq-strong">{r.xp}</span>
+                                        {/* Thanh so sánh với người dẫn đầu — thấy ngay mình
+                                            cách top bao xa, con số trần trụi không nói lên điều đó */}
+                                        <span className="mt-1 block h-1 overflow-hidden rounded-full bg-cq-line/60">
+                                            <span
+                                                className="block h-full rounded-full bg-cq-neon transition-all duration-700"
+                                                style={{ width: `${Math.max(4, Math.round((r.xp / Math.max(1, rows[0]?.xp ?? 1)) * 100))}%` }}
+                                            />
+                                        </span>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                        </table>
+                    </>
                 )}
             </div>
 
@@ -160,6 +180,57 @@ const Leaderboard: React.FC = () => {
                     <span className="font-mono text-cq-strong">{me.xp} XP</span>
                 </div>
             )}
+        </div>
+    );
+};
+
+/** Ba người dẫn đầu, xếp theo bục: nhì – nhất – ba. */
+const Podium: React.FC<{ rows: any[] }> = ({ rows }) => {
+    const order = [rows[1], rows[0], rows[2]];
+    const heights = ['pt-6', 'pt-0', 'pt-9'];
+    const glow = ['rgb(148 163 184)', 'rgb(251 191 36)', 'rgb(180 120 60)'];
+
+    return (
+        <div className="grid grid-cols-3 gap-2 border-b border-cq-line p-4 sm:gap-4 sm:p-6">
+            {order.map((r, i) => {
+                if (!r) return <div key={i} />;
+                const isFirst = i === 1;
+                return (
+                    <div
+                        key={r.userId}
+                        className={`animate-cq-rise ${heights[i]}`}
+                        style={{ '--d': `${i * 120}ms` } as React.CSSProperties}
+                    >
+                        <div
+                            className={`cq-glass relative flex flex-col items-center p-3 text-center sm:p-4 ${
+                                isFirst ? 'cq-ring' : ''
+                            } ${r.isMe ? 'ring-1 ring-cq-neon/50' : ''}`}
+                        >
+                            <span
+                                className="grid h-11 w-11 place-items-center rounded-full text-xl sm:h-14 sm:w-14 sm:text-2xl"
+                                style={{ backgroundColor: `${glow[i]}22`, boxShadow: `0 0 22px -6px ${glow[i]}` }}
+                            >
+                                {MEDALS[i === 1 ? 0 : i === 0 ? 1 : 2]}
+                            </span>
+
+                            <p className="mt-2 line-clamp-1 text-sm font-extrabold text-cq-strong sm:text-base">
+                                {r.displayName}
+                            </p>
+                            <p className="line-clamp-1 text-[11px] text-cq-muted">{r.title}</p>
+
+                            <p
+                                className="mt-2 font-mono text-lg font-black tabular-nums sm:text-xl"
+                                style={{ color: glow[i] }}
+                            >
+                                {r.xp}
+                                <span className="ml-1 text-[10px] font-semibold text-cq-muted">XP</span>
+                            </p>
+
+                            <p className="mt-0.5 text-[11px] text-cq-gold">★ {r.stars}</p>
+                        </div>
+                    </div>
+                );
+            })}
         </div>
     );
 };

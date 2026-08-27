@@ -13,6 +13,7 @@ import {
     isLoggedIn,
     type CqGame,
 } from '@/lib/codequest';
+import GameCover from './GameCover';
 
 const DIFFICULTY_STYLE: Record<string, string> = {
     EASY: 'text-emerald-300 border-emerald-400/30 bg-emerald-400/10',
@@ -144,18 +145,30 @@ const GameCard: React.FC<{ game: CqGame; order: number }> = ({ game, order }) =>
 
     const body = (
         <article
-            className={`cq-panel group relative h-full overflow-hidden p-5 transition-all duration-200 ${
-                game.locked ? 'opacity-70' : 'hover:-translate-y-0.5 hover:border-cq-neon/50'
+            onMouseMove={(e) => {
+                const el = e.currentTarget;
+                const r = el.getBoundingClientRect();
+                el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
+                el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
+            }}
+            className={`cq-glass cq-spotlight animate-cq-rise group relative h-full p-5 ${
+                game.locked ? 'opacity-70' : 'cq-lift'
             }`}
-            style={!game.locked ? { boxShadow: `inset 3px 0 0 ${game.color}` } : undefined}
+            style={
+                {
+                    '--d': `${order * 60}ms`,
+                    ...(game.locked ? {} : { boxShadow: `inset 3px 0 0 ${game.color}` }),
+                } as React.CSSProperties
+            }
         >
             <div className="flex items-start gap-4">
-                <div
-                    className="grid h-14 w-14 shrink-0 place-items-center rounded-xl text-3xl"
-                    style={{ backgroundColor: `${game.color}22`, filter: game.locked ? 'grayscale(1)' : undefined }}
-                >
-                    {game.locked ? '🔒' : game.icon}
-                </div>
+                <GameCover
+                    engine={game.engine}
+                    color={game.color}
+                    icon={game.icon}
+                    locked={game.locked}
+                    className="h-16 w-16"
+                />
 
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -212,8 +225,12 @@ const GameCard: React.FC<{ game: CqGame; order: number }> = ({ game, order }) =>
                         />
                     </div>
 
-                    <p className="mt-3 text-sm font-semibold text-cq-neon opacity-0 transition-opacity group-hover:opacity-100">
-                        {game.levelsCompleted > 0 ? 'Chơi tiếp →' : 'Bắt đầu →'}
+                    {/* Lời mời chơi luôn hiện, chỉ sáng lên khi rê chuột.
+                        Trước đây nó ẩn hoàn toàn (opacity-0) nhưng vẫn chiếm chỗ,
+                        nên đáy mỗi thẻ có một mảng trống không ai hiểu là gì. */}
+                    <p className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-cq-neon/60 transition-all group-hover:gap-2.5 group-hover:text-cq-neon">
+                        {game.levelsCompleted > 0 ? 'Chơi tiếp' : 'Bắt đầu'}
+                        <span className="transition-transform group-hover:translate-x-0.5">→</span>
                     </p>
                 </div>
             )}

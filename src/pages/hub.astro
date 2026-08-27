@@ -8,15 +8,23 @@ import GameHub from '@/components/game/GameHub';
 ---
 
 <GameLayout title="Bản đồ game" active="hub">
-    <main class="pb-16">
-        <section class="border-b border-cq-line bg-cq-panel/40">
-            <div class="mx-auto max-w-6xl px-4 py-8">
-                <h1 class="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+    <main class="cq-aurora cq-grid-fade pb-20">
+        <section class="relative overflow-hidden border-b border-cq-line">
+            <div class="mx-auto max-w-6xl px-4 py-10">
+                <span
+                    class="inline-flex items-center gap-2 rounded-full border border-cq-line bg-cq-panel/60 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-cq-muted"
+                >
+                    10 game · 50 màn chơi
+                </span>
+
+                <h1 class="cq-gradient-text mt-3 text-3xl font-black tracking-tight sm:text-4xl">
                     Bản đồ CodeQuest
                 </h1>
-                <p class="mt-1.5 max-w-2xl text-sm text-cq-muted">
-                    Mỗi game dạy một kỹ năng. Chơi xong game này mới mở được game sau —
-                    thứ tự đó chính là lộ trình học từ câu lệnh đơn giản tới xử lý sự cố hệ thống thật.
+
+                <p class="mt-2.5 max-w-2xl text-[15px] leading-relaxed text-cq-muted">
+                    Mỗi game dạy một kỹ năng, xếp theo đúng lộ trình học — từ câu lệnh đơn giản
+                    tới xử lý sự cố hệ thống thật. Không có nút mũi tên nào để bấm:
+                    <b class="text-cq-strong">gõ đúng lệnh thì nhân vật mới đi</b>.
                 </p>
             </div>
         </section>

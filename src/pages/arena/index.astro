@@ -8,21 +8,76 @@ import ArenaLobby from '@/components/arena/ArenaLobby';
 ---
 
 <GameLayout title="Code Arena" active="arena">
-    <main class="pb-16">
-        <section class="border-b border-cq-line bg-cq-panel/40">
-            <div class="mx-auto max-w-6xl px-4 py-8">
-                <h1 class="text-2xl font-extrabold tracking-tight text-cq-strong sm:text-3xl">
-                    Code Arena
-                </h1>
-                <p class="mt-1.5 max-w-3xl text-sm leading-relaxed text-cq-muted">
-                    Nhiều người cùng một bản đồ. Mỗi lượt bạn có vài chục giây để tự viết một chương trình ngắn,
-                    hết giờ thì code của tất cả mọi người chạy <b class="text-cq-strong">cùng lúc</b> —
-                    không ai thấy nước đi của ai trước khi nộp.
-                </p>
+    <main class="cq-aurora cq-grid-fade pb-20">
+        <!-- ── Mở đầu ─────────────────────────────────────────────────── -->
+        <section class="relative overflow-hidden border-b border-cq-line">
+            <div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[1.15fr_1fr] lg:items-center">
+                <div>
+                    <span
+                        class="inline-flex items-center gap-2 rounded-full border border-cq-neon/30 bg-cq-neon/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-cq-neon"
+                    >
+                        <span class="relative flex h-1.5 w-1.5">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cq-neon opacity-75"></span>
+                            <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-cq-neon"></span>
+                        </span>
+                        Nhiều người · thời gian thực
+                    </span>
+
+                    <h1 class="cq-gradient-text mt-4 text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl">
+                        Không ai thấy<br />nước đi của ai.
+                    </h1>
+
+                    <p class="mt-4 max-w-xl text-[15px] leading-relaxed text-cq-muted">
+                        Cả phòng cùng một bản đồ. Mỗi lượt bạn có vài chục giây để tự viết một chương trình
+                        ngắn — hết giờ, code của <b class="text-cq-strong">tất cả mọi người</b> chạy trên
+                        cùng một ảnh chụp thế giới rồi giải đồng thời.
+                    </p>
+
+                    <div class="mt-6 flex flex-wrap gap-x-6 gap-y-3">
+                        <div class="flex items-center gap-2 text-sm text-cq-muted">
+                            <span class="text-cq-lime">✓</span> Java · Python · JavaScript đều chạy
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-cq-muted">
+                            <span class="text-cq-lime">✓</span> Chạy đi là né được đòn
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-cq-muted">
+                            <span class="text-cq-lime">✓</span> Xem lại từng lượt sau trận
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Màn hình giả lập: nhịp một lượt đấu -->
+                <div class="cq-glass cq-ring relative hidden p-5 lg:block">
+                    <div class="mb-3 flex items-center gap-1.5">
+                        <span class="h-2.5 w-2.5 rounded-full bg-cq-rose/70"></span>
+                        <span class="h-2.5 w-2.5 rounded-full bg-cq-gold/70"></span>
+                        <span class="h-2.5 w-2.5 rounded-full bg-cq-lime/70"></span>
+                        <span class="ml-2 font-mono text-[11px] text-cq-muted">lượt 07 · còn 24s</span>
+                    </div>
+
+                    <pre class="overflow-x-auto rounded-lg bg-cq-screen p-3.5 font-mono text-[12.5px] leading-relaxed"><code><span class="text-cq-muted">// bạn viết</span>
+<span class="text-purple-400">if</span> (<span class="text-cq-neon">enemyNearby</span>()) &#123;
+    <span class="text-cq-neon">attack</span>(<span class="text-cq-neon">weakestEnemy</span>());
+&#125; <span class="text-purple-400">else</span> &#123;
+    <span class="text-cq-neon">moveTo</span>(<span class="text-cq-neon">nearestResource</span>());
+    <span class="text-cq-neon">collect</span>();
+&#125;<span class="animate-cq-caret text-cq-neon">▌</span></code></pre>
+
+                    <div class="mt-3 space-y-1 font-mono text-[11.5px]">
+                        <p class="animate-cq-rise text-cq-muted" style="--d:200ms">▸ Hùng đi tới (6,4).</p>
+                        <p class="animate-cq-rise text-cq-rose" style="--d:600ms">
+                            ▸ An mất 25 máu (100 → 75).
+                        </p>
+                        <p class="animate-cq-rise text-cq-gold" style="--d:1000ms">▸ Bình nhặt 4 năng lượng.</p>
+                        <p class="animate-cq-rise text-cq-lime" style="--d:1400ms">
+                            ▸ Minh cắm cờ ô (3,3). <b>+5 điểm</b>
+                        </p>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <div class="mx-auto max-w-6xl px-4 py-8">
+        <div class="mx-auto max-w-6xl px-4 py-10">
             <ArenaLobby client:load />
         </div>
     </main>

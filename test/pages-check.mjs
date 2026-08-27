@@ -102,6 +102,33 @@ for (const [label, needle] of [
     check(`Không chứa ${label}`, !allText.includes(needle));
 }
 
+console.log('\n-- Giao dien --------------------------------');
+
+// CSS phải nằm ở tệp dùng chung, không nhúng lặp vào từng trang. Dự án có 142
+// trang; nhúng thẳng thì mỗi trang phình lên hơn 100KB và trình duyệt không
+// cache lại được giữa các trang.
+const cssFiles = readdirSync(join(DIST, '_astro')).filter((f) => f.endsWith('.css'));
+check('CSS tách thành tệp dùng chung', cssFiles.length > 0, `${cssFiles.length} tệp`);
+
+const homeSize = Math.round(readFileSync(join(DIST, 'arena', 'index.html')).length / 1024);
+check('Trang HTML gọn (dưới 40KB)', homeSize < 40, `${homeSize} KB`);
+
+const allCss = cssFiles.map((f) => readFileSync(join(DIST, '_astro', f), 'utf8')).join('');
+for (const cls of ['cq-aurora', 'cq-glass', 'cq-spotlight', 'cq-ring', 'cq-grid-fade']) {
+    check(`Còn lớp .${cls}`, allCss.includes(`.${cls}`), '');
+}
+
+// Người bật "giảm chuyển động" trong hệ điều hành phải dùng được trang bình thường
+check('Tôn trọng prefers-reduced-motion', allCss.includes('prefers-reduced-motion'), '');
+
+// `.cq-grid-bg` (lưới đặc, trang chủ) và `.cq-grid-fade` (lưới mờ dần) là hai
+// thứ khác nhau — trùng tên thì một trong hai bị đè mà không báo lỗi.
+check(
+    'Không trùng tên lớp nền lưới',
+    allCss.includes('.cq-grid-bg') && allCss.includes('.cq-grid-fade'),
+    '',
+);
+
 console.log('\n-- Code Arena --------------------------------');
 
 check('Có sảnh đấu trường', has('arena/index.html'));
