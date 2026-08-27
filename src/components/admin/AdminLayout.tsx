@@ -29,6 +29,7 @@ import {
     Gamepad2,
     Layers,
     FileCode,
+    Swords,
 } from 'lucide-react';
 import { SITE_CONFIG } from '@/config/site';
 import { cq, getCachedUser } from '@/lib/codequest';
@@ -45,6 +46,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
     Gamepad2:        <Gamepad2 className="w-4 h-4" />,
     Layers:          <Layers className="w-4 h-4" />,
     FileCode:        <FileCode className="w-4 h-4" />,
+    Swords:          <Swords className="w-4 h-4" />,
 };
 
 function getIcon(name: string): React.ReactNode {

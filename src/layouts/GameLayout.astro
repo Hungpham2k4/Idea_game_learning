@@ -18,7 +18,7 @@ interface Props {
     /** Ẩn header khi cần toàn màn hình (ví dụ trang chơi game) */
     bare?: boolean;
     /** Đánh dấu mục đang mở trên thanh điều hướng */
-    active?: 'hub' | 'leaderboard' | 'profile' | 'badges' | null;
+    active?: 'hub' | 'arena' | 'leaderboard' | 'profile' | 'badges' | null;
 }
 
 const { title, description, bare = false, active = null } = Astro.props;
@@ -27,6 +27,7 @@ const pageTitle = title ? `${title} | ${SITE_CONFIG.name}` : `${SITE_CONFIG.name
 
 const navItems = [
     { key: 'hub', label: 'Bản đồ game', href: '/hub', icon: '🗺️' },
+    { key: 'arena', label: 'Đấu trường', href: '/arena', icon: '⚔️' },
     { key: 'leaderboard', label: 'Xếp hạng', href: '/leaderboard', icon: '🏆' },
     { key: 'profile', label: 'Hồ sơ', href: '/profile', icon: '🎓' },
 ];

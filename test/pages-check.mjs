@@ -102,6 +102,28 @@ for (const [label, needle] of [
     check(`Không chứa ${label}`, !allText.includes(needle));
 }
 
+console.log('\n-- Code Arena --------------------------------');
+
+check('Có sảnh đấu trường', has('arena/index.html'));
+check('Có trang phòng đấu', has('arena/room/index.html'));
+check('Có trang xem lại trận', has('arena/replay/index.html'));
+
+// socket.io phải nằm ở chunk riêng: trang không dùng đấu trường thì không nên
+// phải tải thêm mấy chục KB mã kết nối thường trực.
+const arenaChunk = readdirSync(join(DIST, '_astro')).find((f) => /^arena\.[A-Za-z0-9_-]+\.js$/.test(f));
+check('Mã đấu trường tách thành chunk riêng', !!arenaChunk, arenaChunk ?? '');
+if (arenaChunk) {
+    check('Trang hub KHÔNG tải chunk đấu trường', !read('hub/index.html').includes(arenaChunk), '');
+}
+
+// Địa chỉ socket phải là gốc máy chủ, không kèm /api/v1 — sai chỗ này thì REST
+// vẫn chạy còn socket im lặng không kết nối được, rất khó lần ra.
+const arenaJs = readdirSync(join(DIST, '_astro'))
+    .filter((f) => f.endsWith('.js'))
+    .map((f) => readFileSync(join(DIST, '_astro', f), 'utf8'))
+    .join('');
+check('Không nhúng địa chỉ socket sai (/api/v1/arena)', !arenaJs.includes('/api/v1/arena'), '');
+
 console.log('\n── Đồ thị chunk ──────────────────────────────');
 
 // Rollup có thể cắt một gói thành nhiều chunk import lẫn nhau. Lúc chạy, chunk

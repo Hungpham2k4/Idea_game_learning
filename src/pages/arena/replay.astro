@@ -1,0 +1,14 @@
+---
+/**
+ * @file src/pages/arena/replay.astro
+ * @description Xem lại một trận đã đấu: /arena/replay?match=<id>
+ */
+import GameLayout from '@/layouts/GameLayout.astro';
+import ArenaReplay from '@/components/arena/ArenaReplay';
+---
+
+<GameLayout title="Xem lại trận đấu" active="arena">
+    <main class="px-4 py-6 pb-16">
+        <ArenaReplay client:only="react" />
+    </main>
+</GameLayout>

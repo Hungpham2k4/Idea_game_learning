@@ -1,0 +1,17 @@
+---
+/**
+ * @file src/pages/arena/room.astro
+ * @description Phòng đấu. Mã phòng nằm ở query string: /arena/room?code=ABC123
+ *
+ * Dùng query string thay vì route động vì trang được build tĩnh cho GitHub Pages,
+ * mà mã phòng chỉ sinh ra lúc chạy nên không thể tạo trước từng trang.
+ */
+import GameLayout from '@/layouts/GameLayout.astro';
+import ArenaRoom from '@/components/arena/ArenaRoom';
+---
+
+<GameLayout title="Phòng đấu" active="arena">
+    <main class="px-4 py-6 pb-16">
+        <ArenaRoom client:only="react" />
+    </main>
+</GameLayout>

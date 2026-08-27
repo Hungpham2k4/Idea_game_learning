@@ -71,6 +71,7 @@ export const adminMenu: AdminNavItem[] = [
         children: [
             { key: 'games',  label: 'Danh sách game', icon: 'Gamepad2', path: '/admin/games' },
             { key: 'levels', label: 'Màn chơi',       icon: 'Layers',   path: '/admin/levels' },
+            { key: 'arena',  label: 'Code Arena',    icon: 'Swords',   path: '/admin/arena' },
         ],
     },
     {

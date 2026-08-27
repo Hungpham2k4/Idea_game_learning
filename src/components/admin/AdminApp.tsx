@@ -12,6 +12,7 @@ import AdminLayout from './AdminLayout';
 import DashboardPage from './pages/DashboardPage';
 import GamesPage from './pages/GamesPage';
 import LevelsPage from './pages/LevelsPage';
+import ArenaPage from './pages/ArenaPage';
 import SubmissionsPage from './pages/SubmissionsPage';
 import UsersPage from './pages/UsersPage';
 import { cq, isLoggedIn, type CqUser } from '@/lib/codequest';
@@ -74,6 +75,7 @@ const AdminRouter: React.FC = () => (
             <Route path="games" element={<GamesPage />} />
             <Route path="levels" element={<LevelsPage />} />
             <Route path="submissions" element={<SubmissionsPage />} />
+            <Route path="arena" element={<ArenaPage />} />
         </Route>
 
         <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
