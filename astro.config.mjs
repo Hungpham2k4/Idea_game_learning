@@ -53,10 +53,21 @@ export default defineConfig({
             cssCodeSplit: true,
             rollupOptions: {
                 output: {
-                    // Tách vendor để trình duyệt cache lâu dài
+                    // Tách vendor để trình duyệt cache lâu dài.
+                    //
+                    // Toàn bộ hệ sinh thái React phải nằm CHUNG một chunk.
+                    // Tách react-router ra riêng sẽ tạo phụ thuộc vòng tròn
+                    // (react-vendor ↔ react-router-vendor) vì Rollup nhét hàm
+                    // helper CJS dùng chung vào một bên rồi bên kia import ngược
+                    // lại. Lúc chạy, chunk nạp trước thấy biến của chunk kia là
+                    // undefined → "Cannot read properties of undefined
+                    // (reading 'createContext')" và mọi island chết hydrate.
+                    //
+                    // Lỗi này chỉ xuất hiện ở bản build, dev không chia chunk nên
+                    // không lộ. test:pages có bước dò vòng tròn để chặn tái diễn.
                     manualChunks(id) {
-                        if (id.includes('node_modules/react-router')) return 'react-router-vendor';
-                        if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                        if (!id.includes('node_modules')) return;
+                        if (/node_modules[\/](react|react-dom|react-is|react-router|react-router-dom|scheduler)[\/]/.test(id)) {
                             return 'react-vendor';
                         }
                     },

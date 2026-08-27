@@ -102,6 +102,61 @@ for (const [label, needle] of [
     check(`Không chứa ${label}`, !allText.includes(needle));
 }
 
+console.log('\n── Đồ thị chunk ──────────────────────────────');
+
+// Rollup có thể cắt một gói thành nhiều chunk import lẫn nhau. Lúc chạy, chunk
+// nạp trước sẽ thấy biến của chunk kia là undefined — biểu hiện là
+// "Cannot read properties of undefined (reading 'createContext')" và toàn bộ
+// island React chết hydrate. Bản build vẫn thành công nên không có gì báo động;
+// phải mở trình duyệt mới thấy. Bước này phát hiện ngay lúc build.
+
+const chunkDir = join(DIST, '_astro');
+const graph = new Map();
+
+if (existsSync(chunkDir)) {
+    for (const f of readdirSync(chunkDir).filter((n) => n.endsWith('.js'))) {
+        const src = readFileSync(join(chunkDir, f), 'utf8');
+        const deps = new Set();
+        // import{a as b}from"./x.js"  ·  import"./x.js"  ·  import("./x.js")
+        const re = /from\s*["'](\.\/[^"']+\.js)["']|import\(\s*["'](\.\/[^"']+\.js)["']/g;
+        for (const m of src.matchAll(re)) deps.add((m[1] ?? m[2]).slice(2));
+        graph.set(f, deps);
+    }
+}
+
+// Mọi import giữa các chunk phải trỏ tới file có thật
+const missing = [];
+for (const [from, deps] of graph) {
+    for (const dep of deps) if (!graph.has(dep)) missing.push(`${from} → ${dep}`);
+}
+check('Mọi import giữa các chunk đều phân giải được', missing.length === 0, missing.join(', '));
+
+// Duyệt sâu, đánh dấu 3 màu để tìm chu trình
+const cycles = [];
+const state = new Map();
+function visit(node, path) {
+    if (state.get(node) === 'done') return;
+    if (state.get(node) === 'visiting') {
+        cycles.push([...path.slice(path.indexOf(node)), node]);
+        return;
+    }
+    state.set(node, 'visiting');
+    for (const dep of graph.get(node) ?? []) visit(dep, [...path, node]);
+    state.set(node, 'done');
+}
+for (const node of graph.keys()) visit(node, []);
+
+const shortName = (f) => f.replace(/\.[A-Za-z0-9_-]{8}\.js$/, '');
+check(
+    `Không có phụ thuộc vòng tròn giữa các chunk (${graph.size} chunk)`,
+    cycles.length === 0,
+    cycles.length ? cycles.map((c) => c.map(shortName).join(' → ')).join('  |  ') : '',
+);
+
+// React và react-router phải chung một chunk — tách ra là sinh vòng tròn
+const routerChunk = [...graph.keys()].find((f) => /^react-router-vendor\./.test(f));
+check('react-router nằm chung chunk với React', !routerChunk, routerChunk ?? '');
+
 // ── Tuỳ chọn: kiểm tra backend thật ─────────────────────────────────────────
 if (API_BASE) {
     console.log('\n── Kết nối backend ───────────────────────────');
