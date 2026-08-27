@@ -21,11 +21,70 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Kiểm tra cấu hình TRƯỚC khi cài gói — sai thì biết sau 5 giây,
+      # thay vì chờ hết 2 phút build rồi mới báo.
+      - name: Kiểm tra biến cấu hình
+        id: cfg
+        env:
+          # Đọc tab Variables trước, không có thì thử tab Secrets.
+          # (Hai giá trị này không phải bí mật — để ở Variables mới đúng chỗ.)
+          RAW_API: ${{ vars.PUBLIC_API_URL || secrets.PUBLIC_API_URL }}
+          RAW_SITE: ${{ vars.PUBLIC_SITE_URL || secrets.PUBLIC_SITE_URL }}
+        run: |
+          # Cắt dấu / thừa ở cuối — dán từ thanh địa chỉ hay bị dính
+          api="${RAW_API%/}"
+          site="${RAW_SITE%/}"
+          fail=0
 
-      - uses: actions/setup-node@v4
+          if [ -z "$api" ]; then
+            echo "::error::Chưa đặt PUBLIC_API_URL"
+            fail=1
+          elif echo "$api" | grep -q "localhost\|127\.0\.0\.1"; then
+            echo "::error::PUBLIC_API_URL trỏ về máy cục bộ nên người dùng sẽ không gọi được: $api"
+            fail=1
+          elif ! echo "$api" | grep -q "^https://"; then
+            echo "::error::PUBLIC_API_URL phải bắt đầu bằng https:// — đang là: $api"
+            fail=1
+          elif ! echo "$api" | grep -q "/api/v1$"; then
+            echo "::error::PUBLIC_API_URL phải kết thúc bằng /api/v1 — đang là: $api"
+            fail=1
+          fi
+
+          if [ -z "$site" ]; then
+            echo "::error::Chưa đặt PUBLIC_SITE_URL"
+            fail=1
+          elif ! echo "$site" | grep -q "^https://"; then
+            echo "::error::PUBLIC_SITE_URL phải bắt đầu bằng https:// — đang là: $site"
+            fail=1
+          fi
+
+          if [ "$fail" = "1" ]; then
+            {
+              echo "### Thiếu cấu hình deploy"
+              echo ""
+              echo "Vào **Settings → Secrets and variables → Actions → tab Variables**"
+              echo "(tab **Variables**, không phải tab Secrets) → **New repository variable**:"
+              echo ""
+              echo "| Tên | Giá trị |"
+              echo "|-----|---------|"
+              echo '| `PUBLIC_API_URL` | `https://api.tenmien.com/api/v1` |'
+              echo '| `PUBLIC_SITE_URL` | `https://tenmien.com` |'
+              echo ""
+              echo "Đặt xong vào tab **Actions** → chọn workflow này → **Run workflow**."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "api=$api"   >> "$GITHUB_OUTPUT"
+          echo "site=$site" >> "$GITHUB_OUTPUT"
+          echo "PUBLIC_API_URL  = $api"
+          echo "PUBLIC_SITE_URL = $site"
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Cài đặt gói
@@ -36,26 +95,28 @@ jobs:
 
       - name: Build trang tĩnh
         env:
-          # Đặt ở: Settings → Secrets and variables → Actions → tab Variables
-          #   PUBLIC_API_URL  = https://api.phamhungdev.click/api/v1
-          #   PUBLIC_SITE_URL = https://phamhungdev.click
-          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
-          PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+          PUBLIC_API_URL: ${{ steps.cfg.outputs.api }}
+          PUBLIC_SITE_URL: ${{ steps.cfg.outputs.site }}
         run: npm run build
 
       - name: Kiểm tra kết quả build
         run: |
-          test -f dist/index.html || (echo "::error::Thiếu index.html" && exit 1)
+          npm run test:pages
           test -f dist/.nojekyll || (echo "::error::Thiếu .nojekyll — GitHub sẽ bỏ qua _astro/" && exit 1)
-          if grep -rq "localhost:8080" dist/_astro/*.js 2>/dev/null; then
-            echo "::error::Bản build đang trỏ API về localhost. Kiểm tra biến PUBLIC_API_URL."
-            exit 1
-          fi
-          echo "Số trang HTML: $(find dist -name '*.html' | wc -l)"
+          {
+            echo "### Đã build xong"
+            echo ""
+            echo "- Số trang: **$(find dist -name '*.html' | wc -l)**"
+            echo "- Tên miền: \`$(cat dist/CNAME 2>/dev/null || echo '(không đặt)')\`"
+            echo "- API: \`${{ steps.cfg.outputs.api }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+          # BẮT BUỘC: từ v5 action tự loại file ẩn khỏi gói.
+          # Không bật thì .nojekyll bị bỏ, GitHub bỏ qua _astro/, trang ra trắng.
+          include-hidden-files: true
 
   deploy:
     needs: build
@@ -65,4 +126,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
