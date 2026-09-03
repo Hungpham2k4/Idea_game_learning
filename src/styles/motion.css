@@ -272,3 +272,126 @@
         transition: none !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   XÚC XẮC 3D
+
+   Khối lập phương thật, sáu mặt đặt đúng quy ước xúc xắc (tổng hai mặt đối
+   diện luôn bằng 7). Khi đổ, khối quay nhiều vòng rồi dừng đúng ở góc để mặt
+   cần hiện quay về phía người xem — không phải "lắc rồi đổi số", mà là viên
+   xúc xắc thật sự lăn tới kết quả đó.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cq-dice-stage {
+    perspective: 600px;
+    perspective-origin: 50% 40%;
+}
+
+.cq-dice {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 1.15s cubic-bezier(0.18, 0.72, 0.26, 1);
+    will-change: transform;
+}
+
+/* Viên xúc xắc là VẬT THỂ, không phải thành phần giao diện — nên nó giữ nguyên
+   màu ngà ở cả chế độ sáng lẫn tối, đúng như xúc xắc thật. */
+.cq-dice-face {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 13%;
+    border-radius: 18%;
+    background: linear-gradient(145deg, #fdfdfb 0%, #eceae3 55%, #d9d6cc 100%);
+    box-shadow:
+        inset 0 0 0 1px rgb(255 255 255 / 0.9),
+        inset 0 -22% 26% -14% rgb(90 82 66 / 0.42),
+        inset 0 14% 18% -14% rgb(255 255 255 / 0.9);
+    backface-visibility: hidden;
+}
+
+/* Ô của lưới 3×3 — chấm phải được canh giữa Ô, không phải canh chính nó */
+.cq-dice-face > span {
+    display: grid;
+    place-items: center;
+}
+
+.cq-pip {
+    width: 72%;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: radial-gradient(circle at 34% 30%, #4a5568, #1a202c 70%);
+    box-shadow:
+        inset 0 1px 2px rgb(0 0 0 / 0.6),
+        0 1px 0 rgb(255 255 255 / 0.55);
+}
+
+/* Chấm giữa của mặt 1 tô đỏ, đúng kiểu xúc xắc truyền thống */
+.cq-pip--one {
+    background: radial-gradient(circle at 34% 30%, #f87171, #b91c1c 70%);
+}
+
+/* Đổ xúc xắc: nảy nhẹ khi chạm bàn */
+@keyframes cqDiceDrop {
+    0%   { transform: translateY(-42%) scale(0.86); }
+    58%  { transform: translateY(6%) scale(1.04); }
+    76%  { transform: translateY(-4%) scale(0.99); }
+    100% { transform: translateY(0) scale(1); }
+}
+.animate-cq-dice-drop { animation: cqDiceDrop 0.85s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+
+/* Vệt sáng loé lên khi xúc xắc dừng */
+@keyframes cqDiceLand {
+    0%   { opacity: 0; transform: scale(0.4); }
+    30%  { opacity: 0.85; }
+    100% { opacity: 0; transform: scale(2.1); }
+}
+.animate-cq-dice-land { animation: cqDiceLand 0.7s ease-out forwards; }
+
+/* ── Băng thông báo giữa màn hình ────────────────────────────────────────── */
+
+@keyframes cqBannerIn {
+    0%   { opacity: 0; transform: translateY(-24px) scale(0.94); }
+    12%  { opacity: 1; transform: translateY(0) scale(1.02); }
+    20%  { transform: scale(1); }
+    80%  { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-14px) scale(0.98); }
+}
+.animate-cq-banner { animation: cqBannerIn var(--dur, 2200ms) cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+/* Tia sáng toả ra sau băng thông báo */
+@keyframes cqBurst {
+    0%   { opacity: 0.75; transform: scale(0.5) rotate(0deg); }
+    100% { opacity: 0; transform: scale(1.9) rotate(24deg); }
+}
+.animate-cq-burst { animation: cqBurst 900ms ease-out forwards; }
+
+/* Hạt bay lên khi ăn điểm */
+@keyframes cqConfetti {
+    0%   { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
+    100% { opacity: 0; transform: translate3d(var(--dx, 0), var(--dy, -90px), 0) rotate(var(--rot, 220deg)); }
+}
+.animate-cq-confetti { animation: cqConfetti var(--dur, 1200ms) cubic-bezier(0.15, 0.7, 0.4, 1) forwards; }
+
+/* Ô bàn cờ nảy lên khi quân dừng vào */
+@keyframes cqTilePop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.14); }
+    100% { transform: scale(1); }
+}
+.animate-cq-tile-pop { animation: cqTilePop 620ms cubic-bezier(0.25, 1.5, 0.5, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+    .cq-dice,
+    .animate-cq-dice-drop,
+    .animate-cq-dice-land,
+    .animate-cq-banner,
+    .animate-cq-burst,
+    .animate-cq-confetti,
+    .animate-cq-tile-pop {
+        animation: none !important;
+        transition: none !important;
+    }
+}

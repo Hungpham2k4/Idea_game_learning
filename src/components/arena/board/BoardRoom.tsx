@@ -4,7 +4,9 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import BoardCanvas, { Die } from './BoardCanvas';
+import BoardCanvas from './BoardCanvas';
+import Dice3D from './Dice3D';
+import GameBanner, { useBannerQueue, type BannerKind } from './GameBanner';
 import ProblemPanel from './ProblemPanel';
 import { connectArena } from '../../../lib/arena';
 import {
@@ -40,6 +42,69 @@ const TONE: Record<string, LogLine['tone']> = {
     roll: 'system',
 };
 
+
+/**
+ * Dịch một sự kiện của server thành băng thông báo.
+ *
+ * Trả về `null` cho những sự kiện vụn (di chuyển, đổ xúc xắc) — hiện băng cho
+ * mọi thứ thì băng mất hết ý nghĩa, chỉ những khoảnh khắc đáng dừng lại mới
+ * xứng đáng chiếm giữa màn hình.
+ */
+function eventToBanner(
+    e: BoardEvent,
+    meId: string | undefined,
+    nameOf: (id?: string) => string,
+): { kind: BannerKind; title: string; subtitle?: string; amount?: number; duration?: number } | null {
+    const mine = e.actorId === meId;
+    const who = mine ? 'Bạn' : nameOf(e.actorId);
+
+    switch (e.kind) {
+        case 'problemStart':
+            return {
+                kind: 'problem',
+                title: mine ? 'Thử thách của bạn!' : `${who} gặp thử thách`,
+                subtitle: mine ? 'Viết một hàm giải bài — đúng thì được thưởng' : 'Cùng nghĩ thử xem giải thế nào',
+                duration: 2000,
+            };
+        case 'problemSolved':
+            return {
+                kind: 'solved',
+                title: mine ? 'Giải đúng!' : `${who} giải đúng`,
+                subtitle: mine ? 'Chuẩn không cần chỉnh' : undefined,
+                amount: e.amount,
+                duration: 2400,
+            };
+        case 'problemFailed':
+            return {
+                kind: 'failed',
+                title: mine ? 'Chưa đúng' : `${who} chưa giải được`,
+                subtitle: mine ? 'Lượt sau gỡ lại' : undefined,
+                amount: e.amount,
+                duration: 2400,
+            };
+        case 'chance':
+            return { kind: 'chance', title: 'Ô cơ hội', subtitle: e.text, duration: 2600 };
+        case 'trap':
+            return { kind: 'trap', title: `${who} dính chướng ngại`, subtitle: e.text, amount: e.amount, duration: 2300 };
+        case 'bonus':
+            return { kind: 'bonus', title: `${who} nhận thưởng`, amount: e.amount, duration: 1900 };
+        case 'shield':
+            return { kind: 'shield', title: `${who} nhận khiên`, subtitle: 'Đỡ trọn một lần phạt bất kỳ', duration: 1900 };
+        case 'shieldUsed':
+            return { kind: 'shield', title: 'Khiên đã đỡ đòn!', subtitle: e.text, duration: 2100 };
+        case 'jail':
+            return { kind: 'jail', title: `${who} phải nghỉ lượt`, subtitle: e.text, duration: 2100 };
+        case 'warp':
+            return { kind: 'warp', title: `${who} bị dịch chuyển`, subtitle: e.text, duration: 2000 };
+        case 'lap':
+            return { kind: 'lap', title: `${who} đi hết một vòng`, amount: e.amount, duration: 2000 };
+        case 'win':
+            return { kind: 'win', title: 'Kết thúc ván!', subtitle: e.text, duration: 3200 };
+        default:
+            return null;
+    }
+}
+
 const BoardRoom: React.FC = () => {
     const [roomCode, setRoomCode] = useState('');
     const [state, setState] = useState<BoardRoomState | null>(null);
@@ -59,8 +124,13 @@ const BoardRoom: React.FC = () => {
     const socketRef = useRef<Socket | null>(null);
     const logRef = useRef<HTMLDivElement>(null);
     const me = useMemo(() => getCachedUser(), []);
+    // Handler socket chỉ đăng ký một lần nên phải đọc `me` qua ref,
+    // không thì nó giữ mãi giá trị của lần render đầu.
+    const meRef = useRef(me);
+    meRef.current = me;
 
     const { notices, push: pushNotice } = useRoomNotices();
+    const banner = useBannerQueue();
     const [confirmLeave, setConfirmLeave] = useState(false);
     // Còn ở sảnh thì rời tự do; đang chơi mới cần cảnh báo
     const inGame = !!state && state.phase !== 'lobby' && state.phase !== 'finished';
@@ -120,6 +190,13 @@ const BoardRoom: React.FC = () => {
         socket.on('board:events', (p: { events: BoardEvent[]; world: any; phase: string }) => {
             pushEvents(p.events);
 
+            const nameOf = (id?: string) =>
+                p.world?.players?.find((x: any) => x.id === id)?.name ?? 'Người chơi';
+            for (const e of p.events) {
+                const b = eventToBanner(e, meRef.current?.id, nameOf);
+                if (b) banner.push(b);
+            }
+
             const roll = p.events.find((e) => e.kind === 'roll');
             if (roll?.dice?.length) {
                 setRolling(true);
@@ -147,6 +224,13 @@ const BoardRoom: React.FC = () => {
 
         socket.on('board:solveResult', (p: any) => {
             pushEvents(p.events ?? []);
+
+            const nameOf = (id?: string) =>
+                p.world?.players?.find((x: any) => x.id === id)?.name ?? 'Người chơi';
+            for (const e of p.events ?? []) {
+                const b = eventToBanner(e, meRef.current?.id, nameOf);
+                if (b) banner.push(b);
+            }
             setState((prev) => (prev ? { ...prev, world: p.world, phase: 'resolved', problem: null } : prev));
         });
 
@@ -173,6 +257,27 @@ const BoardRoom: React.FC = () => {
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+
+    // ── Báo khi đổi lượt ─────────────────────────────────────────────────────
+    // Chỉ báo khi người tới lượt THỰC SỰ đổi, không báo lại mỗi lần state
+    // được phát (state phát rất nhiều lần trong một lượt).
+    const lastTurnRef = useRef<string | null>(null);
+    useEffect(() => {
+        const cur = state?.currentPlayerId ?? null;
+        if (!cur || state?.phase !== 'awaitingRoll') return;
+        if (lastTurnRef.current === cur) return;
+        lastTurnRef.current = cur;
+
+        const isMe = cur === me?.id;
+        const name = world?.players.find((p) => p.id === cur)?.name ?? 'Người chơi';
+        banner.push(
+            isMe
+                ? { kind: 'yourTurn', title: 'Đến lượt bạn!', subtitle: 'Bấm đổ xúc xắc để đi', duration: 2000 }
+                : { kind: 'otherTurn', title: `Lượt của ${name}`, subtitle: 'Đang chờ họ đổ xúc xắc…', duration: 1600 },
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state?.currentPlayerId, state?.phase]);
 
     // Đồng hồ đếm lùi ở client, server không bơm từng giây
     useEffect(() => {
@@ -288,9 +393,9 @@ const BoardRoom: React.FC = () => {
 
                                 {/* Khu vực đổ xúc xắc */}
                                 <div className="cq-glass flex flex-wrap items-center gap-4 p-4">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-4 pb-2">
                                         {(dice.length ? dice : [1]).map((d, i) => (
-                                            <Die key={i} value={d} rolling={rolling} size={52} />
+                                            <Dice3D key={i} value={d} rolling={rolling} size={62} index={i} />
                                         ))}
                                     </div>
 
@@ -367,6 +472,8 @@ const BoardRoom: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <GameBanner item={banner.current} onDone={banner.next} />
 
             <NoticeStack notices={notices} />
 

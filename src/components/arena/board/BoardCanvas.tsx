@@ -9,7 +9,7 @@
  * Quân di chuyển bằng `transition` của CSS trên toạ độ phần trăm, nên đi qua
  * bao nhiêu ô cũng chỉ là một lần chuyển động mượt, không phải nhảy từng bước.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import type { BoardTile, BoardPlayerState } from '../../../lib/board';
 import { SLOT_COLORS, TILE_STYLE } from '../../../lib/board';
 
@@ -112,11 +112,72 @@ const BoardCanvas: React.FC<Props> = ({ tiles, players, currentPlayerId, meId, h
                     height: `${cellH * (rows - 2)}%`,
                 }}
             >
-                <div className="text-center">
+                {/* Hai vòng tròn nét đứt quay ngược chiều nhau — cho khoảng
+                    giữa bàn cờ có thứ để nhìn thay vì một mảng trống */}
+                <svg
+                    className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.18]"
+                    viewBox="0 0 200 200"
+                    aria-hidden="true"
+                >
+                    <circle
+                        cx="100"
+                        cy="100"
+                        r="74"
+                        fill="none"
+                        stroke="rgb(var(--cq-neon))"
+                        strokeWidth="1"
+                        strokeDasharray="6 10"
+                        style={{ transformOrigin: '100px 100px', animation: 'cqSpin 34s linear infinite' }}
+                    />
+                    <circle
+                        cx="100"
+                        cy="100"
+                        r="56"
+                        fill="none"
+                        stroke="rgb(var(--cq-neon))"
+                        strokeWidth="1"
+                        strokeDasharray="2 14"
+                        style={{ transformOrigin: '100px 100px', animation: 'cqSpin 22s linear infinite reverse' }}
+                    />
+                    {[0, 90, 180, 270].map((deg) => (
+                        <line
+                            key={deg}
+                            x1="100"
+                            y1="26"
+                            x2="100"
+                            y2="40"
+                            stroke="rgb(var(--cq-neon))"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            transform={`rotate(${deg} 100 100)`}
+                        />
+                    ))}
+                </svg>
+
+                <div className="relative text-center">
+                    <span className="mb-2 block text-3xl sm:text-5xl">🎲</span>
                     <p className="cq-gradient-text text-xl font-black tracking-tight sm:text-3xl">CODE TYCOON</p>
                     <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-cq-muted sm:text-xs">
                         {tiles.length} ô · gõ code để đi
                     </p>
+
+                    {/* Bảng điểm rút gọn ngay giữa bàn — nhìn bàn cờ là biết ai
+                        đang dẫn, không phải liếc xuống bảng bên dưới */}
+                    {players.length > 0 && (
+                        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                            {[...players]
+                                .sort((a, b) => b.score - a.score)
+                                .map((p) => (
+                                    <span key={p.id} className="flex items-center gap-1 text-[10px] sm:text-xs">
+                                        <span
+                                            className="h-2 w-2 rounded-full"
+                                            style={{ backgroundColor: SLOT_COLORS[p.slot % SLOT_COLORS.length] }}
+                                        />
+                                        <span className="font-mono font-bold tabular-nums text-cq-strong">{p.score}</span>
+                                    </span>
+                                ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -130,7 +191,7 @@ const BoardCanvas: React.FC<Props> = ({ tiles, players, currentPlayerId, meId, h
                 return (
                     <div
                         key={i}
-                        className={`absolute p-[2px] transition-transform duration-300 ${hot ? 'z-10 scale-105' : ''}`}
+                        className={`absolute p-[2px] ${hot ? 'animate-cq-tile-pop z-10' : ''}`}
                         style={{ left: `${cx * cellW}%`, top: `${cy * cellH}%`, width: `${cellW}%`, height: `${cellH}%` }}
                         title={`Ô ${i + 1} — ${tile.label}${tile.note ? `\n${tile.note}` : ''}`}
                     >
@@ -160,6 +221,11 @@ const BoardCanvas: React.FC<Props> = ({ tiles, players, currentPlayerId, meId, h
                                                   : '#4ade80',
                                     }}
                                 />
+                            )}
+
+                            {/* Ô vừa được đi tới: vệt sáng quét ngang một lần */}
+                            {hot && (
+                                <span className="pointer-events-none absolute inset-0 animate-[cqShimmer_1.1s_ease-out] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
                             )}
                         </div>
                     </div>
@@ -216,59 +282,6 @@ const BoardCanvas: React.FC<Props> = ({ tiles, players, currentPlayerId, meId, h
                             )}
                         </span>
                     </div>
-                );
-            })}
-        </div>
-    );
-};
-
-// ─── Xúc xắc ─────────────────────────────────────────────────────────────────
-
-/** Chấm của mặt xúc xắc, theo lưới 3×3. */
-const PIPS: Record<number, [number, number][]> = {
-    1: [[1, 1]],
-    2: [[0, 0], [2, 2]],
-    3: [[0, 0], [1, 1], [2, 2]],
-    4: [[0, 0], [2, 0], [0, 2], [2, 2]],
-    5: [[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]],
-    6: [[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]],
-};
-
-export const Die: React.FC<{ value: number; rolling?: boolean; size?: number }> = ({
-    value,
-    rolling = false,
-    size = 56,
-}) => {
-    // Lắc qua các mặt trong lúc "đổ" để có cảm giác thật
-    const [shown, setShown] = useState(value);
-
-    useEffect(() => {
-        if (!rolling) {
-            setShown(value);
-            return;
-        }
-        const id = setInterval(() => setShown(1 + Math.floor(Math.random() * 6)), 80);
-        return () => clearInterval(id);
-    }, [rolling, value]);
-
-    const pips = PIPS[Math.min(6, Math.max(1, shown))] ?? PIPS[1];
-
-    return (
-        <div
-            className={`grid rounded-xl border border-cq-line bg-cq-panel p-[12%] shadow-lg ${
-                rolling ? 'animate-[cqShake_0.35s_ease-in-out_infinite]' : 'animate-cq-tick'
-            }`}
-            style={{ width: size, height: size, gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)' }}
-            aria-label={`Xúc xắc ${shown}`}
-        >
-            {Array.from({ length: 9 }, (_, i) => {
-                const c = i % 3;
-                const r = Math.floor(i / 3);
-                const on = pips.some(([px, py]) => px === c && py === r);
-                return (
-                    <span key={i} className="grid place-items-center">
-                        {on && <span className="h-[70%] w-[70%] rounded-full bg-cq-strong" />}
-                    </span>
                 );
             })}
         </div>
