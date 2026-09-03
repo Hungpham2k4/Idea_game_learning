@@ -184,6 +184,9 @@
     --cq-text:   226 232 240;
     --cq-muted:  148 163 184;
     --cq-screen:  2 6 23;
+    /* Bề mặt lõm cho giao diện thường (input, thẻ, hàng bảng).
+       Khác --cq-screen ở chỗ nó ĐỔI theo chủ đề: chế độ sáng thì sáng. */
+    --cq-sunken:  15 23 42;
     --cq-neon:   56 189 248;
     --cq-lime:   74 222 128;
     --cq-rose:  251 113 133;
@@ -207,6 +210,7 @@
     --cq-text:   15 23 42;
     --cq-muted:  71 85 105;
     --cq-screen: 30 41 59;
+    --cq-sunken: 241 245 249;
     --cq-neon:    2 132 199;
     --cq-lime:   22 163 74;
     --cq-rose:  225 29 72;

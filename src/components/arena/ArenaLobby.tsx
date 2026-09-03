@@ -115,7 +115,7 @@ const ArenaLobby: React.FC = () => {
                                 placeholder="ABC123"
                                 maxLength={6}
                                 aria-label="Mã phòng"
-                                className="w-44 rounded-xl border border-cq-line bg-cq-screen px-4 py-3 text-center font-mono text-xl font-black tracking-[0.3em] text-cq-neon outline-none transition focus:border-cq-neon focus:shadow-[0_0_0_4px_rgb(var(--cq-neon)/0.12)]"
+                                className="w-44 rounded-xl border border-cq-line bg-cq-sunken px-4 py-3 text-center font-mono text-xl font-black tracking-[0.3em] text-cq-neon outline-none transition focus:border-cq-neon focus:shadow-[0_0_0_4px_rgb(var(--cq-neon)/0.12)]"
                             />
                             {joinCode.length === 0 && (
                                 <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 animate-cq-caret text-cq-neon/60">
@@ -361,7 +361,7 @@ const SectionTitle: React.FC<{ title: string; count?: number; note?: string; liv
 );
 
 const Chip: React.FC<{ icon?: string; children: React.ReactNode }> = ({ icon, children }) => (
-    <span className="inline-flex items-center gap-1 rounded-full border border-cq-line bg-cq-screen/60 px-2.5 py-1 text-[11px] font-semibold text-cq-muted">
+    <span className="inline-flex items-center gap-1 rounded-full border border-cq-line bg-cq-sunken/60 px-2.5 py-1 text-[11px] font-semibold text-cq-muted">
         {icon && <span className="opacity-70">{icon}</span>}
         {children}
     </span>

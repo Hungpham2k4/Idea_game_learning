@@ -113,7 +113,7 @@ const ProblemPanel: React.FC<Props> = ({
                 <div className="min-h-0 overflow-y-auto border-b border-cq-line p-4 lg:border-b-0 lg:border-r">
                     <Markdown text={problem.statement} />
 
-                    <div className="mt-4 rounded-lg border border-cq-line bg-cq-screen p-3">
+                    <div className="mt-4 rounded-lg border border-cq-line bg-cq-sunken p-3">
                         <p className="text-[11px] font-bold uppercase tracking-wide text-cq-muted">Hàm cần viết</p>
                         <code className="mt-1 block font-mono text-sm text-cq-neon">{problem.signature}</code>
                     </div>
@@ -134,7 +134,7 @@ const ProblemPanel: React.FC<Props> = ({
                                             ? outcome.passed
                                                 ? 'border-emerald-500/40 bg-emerald-500/10'
                                                 : 'border-red-500/40 bg-red-500/10'
-                                            : 'border-cq-line bg-cq-screen'
+                                            : 'border-cq-line bg-cq-sunken'
                                     }`}
                                 >
                                     <div className="flex items-start gap-2">

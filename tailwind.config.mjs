@@ -37,6 +37,7 @@ export default {
                     text:   'rgb(var(--cq-text) / <alpha-value>)',   // chữ chính
                     muted:  'rgb(var(--cq-muted) / <alpha-value>)',  // chữ phụ
                     screen: 'rgb(var(--cq-screen) / <alpha-value>)', // nền màn hình code/terminal
+                    sunken: 'rgb(var(--cq-sunken) / <alpha-value>)', // bề mặt lõm, ĐỔI theo chủ đề
                     neon:   'rgb(var(--cq-neon) / <alpha-value>)',   // nhấn xanh
                     lime:   'rgb(var(--cq-lime) / <alpha-value>)',   // đúng / hoàn thành
                     rose:   'rgb(var(--cq-rose) / <alpha-value>)',   // lỗi

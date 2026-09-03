@@ -20,6 +20,12 @@ import {
     type RoundResult,
 } from '../../lib/arena';
 import { getCachedUser, isLoggedIn } from '../../lib/codequest';
+import {
+    LeaveConfirm,
+    NoticeStack,
+    useLeaveWarning,
+    useRoomNotices,
+} from './RoomNotices';
 
 type LogLine = { id: number; text: string; tone: 'normal' | 'mine' | 'error' | 'system' };
 
@@ -50,6 +56,12 @@ const ArenaRoom: React.FC = () => {
     const socketRef = useRef<Socket | null>(null);
     const logRef = useRef<HTMLDivElement>(null);
     const me = useMemo(() => getCachedUser(), []);
+
+    const { notices, push: pushNotice } = useRoomNotices();
+    const [confirmLeave, setConfirmLeave] = useState(false);
+    // Còn ở sảnh thì rời tự do; đang chơi mới cần cảnh báo
+    const inGame = !!state && state.phase !== 'lobby' && state.phase !== 'finished';
+    useLeaveWarning(inGame);
 
     const addLog = useCallback((text: string, tone: LogLine['tone'] = 'normal') => {
         setLog((prev) => [...prev.slice(-140), { id: ++logSeq, text, tone }]);
@@ -128,6 +140,11 @@ const ArenaRoom: React.FC = () => {
         socket.on('match:finished', (p: any) => {
             setFinalRanking(p.ranking);
             addLog('── Trận đấu kết thúc ──', 'system');
+        });
+
+        socket.on('room:notice', (n: { kind: any; text: string }) => {
+            pushNotice({ kind: n.kind, text: n.text });
+            addLog(n.text, 'system');
         });
 
         socket.on('arena:error', (e: { message: string }) => setError(e.message));
@@ -220,9 +237,12 @@ const ArenaRoom: React.FC = () => {
                         />
                         {connected ? 'Đã kết nối' : 'Đang nối lại…'}
                     </span>
-                    <a href="/arena" className="text-xs font-semibold text-cq-dim hover:text-cq-strong">
+                    <button
+                        onClick={() => setConfirmLeave(true)}
+                        className="text-xs font-semibold text-cq-muted transition hover:text-cq-strong"
+                    >
                         Rời phòng
-                    </a>
+                    </button>
                 </span>
             </div>
 
@@ -347,6 +367,18 @@ const ArenaRoom: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <NoticeStack notices={notices} />
+
+            <LeaveConfirm
+                open={confirmLeave}
+                inGame={inGame}
+                onCancel={() => setConfirmLeave(false)}
+                onConfirm={() => {
+                    emit('room:leave');
+                    window.location.href = '/arena';
+                }}
+            />
 
             {finalRanking && <FinalOverlay ranking={finalRanking} meId={me?.id} matchId={state?.matchId} />}
         </div>

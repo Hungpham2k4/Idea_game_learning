@@ -16,6 +16,12 @@ import {
     type MyGradeResult,
 } from '../../../lib/board';
 import { getCachedUser, isLoggedIn } from '../../../lib/codequest';
+import {
+    LeaveConfirm,
+    NoticeStack,
+    useLeaveWarning,
+    useRoomNotices,
+} from '../RoomNotices';
 
 type LogLine = { id: number; text: string; tone: 'normal' | 'good' | 'bad' | 'system' };
 let logSeq = 0;
@@ -53,6 +59,12 @@ const BoardRoom: React.FC = () => {
     const socketRef = useRef<Socket | null>(null);
     const logRef = useRef<HTMLDivElement>(null);
     const me = useMemo(() => getCachedUser(), []);
+
+    const { notices, push: pushNotice } = useRoomNotices();
+    const [confirmLeave, setConfirmLeave] = useState(false);
+    // Còn ở sảnh thì rời tự do; đang chơi mới cần cảnh báo
+    const inGame = !!state && state.phase !== 'lobby' && state.phase !== 'finished';
+    useLeaveWarning(inGame);
 
     const addLog = useCallback((text: string, tone: LogLine['tone'] = 'normal') => {
         setLog((prev) => [...prev.slice(-160), { id: ++logSeq, text, tone }]);
@@ -148,6 +160,11 @@ const BoardRoom: React.FC = () => {
             addLog('── Ván cờ kết thúc ──', 'system');
         });
 
+        socket.on('room:notice', (n: { kind: any; text: string }) => {
+            pushNotice({ kind: n.kind, text: n.text });
+            addLog(n.text, 'system');
+        });
+
         socket.on('arena:error', (e: { message: string }) => setError(e.message));
 
         return () => {
@@ -218,7 +235,12 @@ const BoardRoom: React.FC = () => {
                         <span className={`h-2 w-2 rounded-full ${connected ? 'animate-[cqPulseDot_1.8s_ease-in-out_infinite] bg-emerald-400' : 'bg-amber-400'}`} />
                         {connected ? 'Đã kết nối' : 'Đang nối lại…'}
                     </span>
-                    <a href="/arena" className="text-xs font-semibold text-cq-muted hover:text-cq-strong">Rời bàn</a>
+                    <button
+                        onClick={() => setConfirmLeave(true)}
+                        className="text-xs font-semibold text-cq-muted transition hover:text-cq-strong"
+                    >
+                        Rời bàn
+                    </button>
                 </span>
             </div>
 
@@ -346,6 +368,18 @@ const BoardRoom: React.FC = () => {
                 </div>
             )}
 
+            <NoticeStack notices={notices} />
+
+            <LeaveConfirm
+                open={confirmLeave}
+                inGame={inGame}
+                onCancel={() => setConfirmLeave(false)}
+                onConfirm={() => {
+                    emit('room:leave');
+                    window.location.href = '/arena';
+                }}
+            />
+
             {finalRanking && <FinalOverlay ranking={finalRanking} meId={me?.id} />}
         </div>
     );
@@ -382,7 +416,7 @@ const LobbyPanel: React.FC<{
                         <div
                             key={i}
                             className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
-                                seat ? 'border-cq-line bg-cq-screen' : 'border-dashed border-cq-line/60'
+                                seat ? 'border-cq-line bg-cq-sunken' : 'border-dashed border-cq-line/60'
                             }`}
                         >
                             <span
@@ -542,7 +576,7 @@ const FinalOverlay: React.FC<{ ranking: any[]; meId?: string }> = ({ ranking, me
                     <div
                         key={r.userId}
                         className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
-                            r.userId === meId ? 'bg-cq-neon/10 ring-1 ring-cq-neon/40' : 'bg-cq-screen'
+                            r.userId === meId ? 'bg-cq-neon/10 ring-1 ring-cq-neon/40' : 'bg-cq-sunken'
                         }`}
                     >
                         <span className="w-7 text-center text-lg">
