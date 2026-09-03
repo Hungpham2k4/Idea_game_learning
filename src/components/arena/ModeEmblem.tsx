@@ -55,6 +55,47 @@ const ModeEmblem: React.FC<Props> = ({ mode, size = 44, className = '' }) => {
         );
     }
 
+    if (mode === 'board') {
+        // Xúc xắc nghiêng, mặt 5 chấm, kèm hai ô bàn cờ phía sau
+        return (
+            <svg {...common}>
+                <defs>
+                    <linearGradient id="cqDie" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#38bdf8" />
+                        <stop offset="100%" stopColor="#a855f7" />
+                    </linearGradient>
+                </defs>
+
+                {/* Hai ô bàn cờ mờ phía sau, gợi ý đây là trò đi vòng */}
+                <rect x="4" y="6" width="11" height="11" rx="2.5" stroke="url(#cqDie)" strokeWidth="1.6" opacity="0.35" />
+                <rect x="33" y="31" width="11" height="11" rx="2.5" stroke="url(#cqDie)" strokeWidth="1.6" opacity="0.35" />
+
+                {/* Xúc xắc */}
+                <rect
+                    x="13"
+                    y="13"
+                    width="22"
+                    height="22"
+                    rx="5"
+                    fill="url(#cqDie)"
+                    fillOpacity="0.16"
+                    stroke="url(#cqDie)"
+                    strokeWidth="2.2"
+                    transform="rotate(-12 24 24)"
+                />
+                <g transform="rotate(-12 24 24)" className="animate-cq-breathe">
+                    {[
+                        [18, 18], [30, 18],
+                        [24, 24],
+                        [18, 30], [30, 30],
+                    ].map(([cx, cy]) => (
+                        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="2.4" fill="url(#cqDie)" />
+                    ))}
+                </g>
+            </svg>
+        );
+    }
+
     if (mode === 'survival') {
         // Khiên, với ba đợt quái ập vào từ ngoài
         return (

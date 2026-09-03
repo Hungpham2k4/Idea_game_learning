@@ -14,6 +14,8 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SLOT_COLORS } from '../../lib/arena';
+import { TILE_STYLE } from '../../lib/board';
+import { ringLayout } from './board/BoardCanvas';
 
 interface Props {
     width: number;
@@ -34,6 +36,11 @@ interface Pawn {
 const key = (x: number, y: number) => `${x},${y}`;
 
 const MapThumb: React.FC<Props> = ({ width, height, layout, mode, still = false, className = '' }) => {
+    // Bàn cờ có bố cục hoàn toàn khác (vòng tròn ô, không có tường) nên vẽ riêng
+    if (mode === 'board') {
+        return <BoardThumb tiles={layout?.tiles ?? []} still={still} className={className} />;
+    }
+
     const w = Math.max(1, Number(width) || 1);
     const h = Math.max(1, Number(height) || 1);
 
@@ -179,6 +186,73 @@ const MapThumb: React.FC<Props> = ({ width, height, layout, mode, still = false,
             {/* Nhãn kích thước: có nền mờ để không bị quân cờ đè lên khó đọc */}
             <span className="pointer-events-none absolute bottom-1 left-1 rounded bg-cq-screen/85 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wider text-cq-neon backdrop-blur-sm">
                 {w}×{h}
+            </span>
+        </div>
+    );
+};
+
+/**
+ * Ảnh thu nhỏ của bàn cờ: vẽ đúng vòng ô thật, tô màu theo loại ô, và cho một
+ * quân chạy vòng quanh. Nhìn là biết bàn có bao nhiêu ô thử thách.
+ */
+const BoardThumb: React.FC<{ tiles: any[]; still: boolean; className: string }> = ({
+    tiles,
+    still,
+    className,
+}) => {
+    const n = tiles.length || 24;
+    const { cols, rows, cells } = ringLayout(n);
+    const [pos, setPos] = useState(0);
+
+    useEffect(() => {
+        if (still) return;
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+        const id = setInterval(() => setPos((p) => (p + 1) % n), 620);
+        return () => clearInterval(id);
+    }, [still, n]);
+
+    const cw = 100 / cols;
+    const ch = 100 / rows;
+    const cell = cells[pos] ?? [0, 0];
+
+    return (
+        <div
+            className={`relative overflow-hidden rounded-xl border border-cq-line/70 bg-cq-screen ${className}`}
+            style={{ aspectRatio: `${cols} / ${rows}` }}
+            aria-hidden="true"
+        >
+            {cells.map(([cx, cy], i) => {
+                const t = tiles[i];
+                const style = TILE_STYLE[(t?.kind ?? 'bonus') as keyof typeof TILE_STYLE] ?? TILE_STYLE.bonus;
+                return (
+                    <div
+                        key={i}
+                        className="absolute p-[1px]"
+                        style={{ left: `${cx * cw}%`, top: `${cy * ch}%`, width: `${cw}%`, height: `${ch}%` }}
+                    >
+                        <div
+                            className="h-full w-full rounded-[3px] border border-cq-line/40"
+                            style={{ background: style.bg }}
+                        />
+                    </div>
+                );
+            })}
+
+            {/* Một quân chạy vòng quanh cho sinh động */}
+            <span
+                className="absolute rounded-full bg-cq-neon transition-all duration-500 ease-out"
+                style={{
+                    left: `${(cell[0] + 0.5) * cw}%`,
+                    top: `${(cell[1] + 0.5) * ch}%`,
+                    width: `${cw * 0.44}%`,
+                    aspectRatio: '1',
+                    transform: 'translate(-50%, -50%)',
+                    boxShadow: '0 0 10px rgb(var(--cq-neon))',
+                }}
+            />
+
+            <span className="pointer-events-none absolute bottom-1 left-1 rounded bg-cq-screen/85 px-1.5 py-0.5 font-mono text-[9px] font-bold text-cq-neon backdrop-blur-sm">
+                {n} ô
             </span>
         </div>
     );

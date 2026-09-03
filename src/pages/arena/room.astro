@@ -7,11 +7,11 @@
  * mà mã phòng chỉ sinh ra lúc chạy nên không thể tạo trước từng trang.
  */
 import GameLayout from '@/layouts/GameLayout.astro';
-import ArenaRoom from '@/components/arena/ArenaRoom';
+import RoomRouter from '@/components/arena/RoomRouter';
 ---
 
 <GameLayout title="Phòng đấu" active="arena">
     <main class="px-4 py-6 pb-16">
-        <ArenaRoom client:only="react" />
+        <RoomRouter client:only="react" />
     </main>
 </GameLayout>

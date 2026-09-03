@@ -11,7 +11,7 @@ import { apiFetch, getToken } from './codequest';
 
 // ─── Kiểu dữ liệu (khớp với server) ──────────────────────────────────────────
 
-export type ArenaMode = 'territory' | 'battle' | 'survival';
+export type ArenaMode = 'territory' | 'battle' | 'survival' | 'board';
 export type RoomPhase = 'lobby' | 'writing' | 'resolving' | 'review' | 'finished';
 
 export interface ArenaMap {
@@ -164,12 +164,14 @@ export const MODE_LABEL: Record<ArenaMode, string> = {
     territory: 'Chiếm lãnh thổ',
     battle: 'Đấu sinh tồn',
     survival: 'Hợp tác chống quái',
+    board: 'Cờ tỷ phú lập trình',
 };
 
 export const MODE_HINT: Record<ArenaMode, string> = {
     territory: 'Điểm cộng dồn theo số ô bạn giữ được mỗi lượt',
     battle: 'Điểm theo sát thương gây ra và số mạng hạ được',
     survival: 'Cả phòng cùng phe — sống hết số lượt là cùng thắng',
+    board: 'Đổ xúc xắc đi quanh bàn, dừng ô thử thách thì phải giải bài',
 };
 
 // ─── REST ────────────────────────────────────────────────────────────────────
@@ -195,6 +197,15 @@ export const arenaApi = {
         deleteMap: (id: string) => apiFetch(`/admin/arena/maps/${id}`, { method: 'DELETE' }),
         matches: (take = 40) => apiFetch<any[]>(`/admin/arena/matches?take=${take}`),
         live: () => apiFetch<any[]>('/admin/arena/live'),
+
+        // Ngân hàng bài tập cho bàn cờ
+        problems: () => apiFetch<any[]>('/admin/arena/problems'),
+        createProblem: (body: Record<string, any>) =>
+            apiFetch('/admin/arena/problems', { method: 'POST', body }),
+        updateProblem: (id: string, body: Record<string, any>) =>
+            apiFetch(`/admin/arena/problems/${id}`, { method: 'PATCH', body }),
+        deleteProblem: (id: string) => apiFetch(`/admin/arena/problems/${id}`, { method: 'DELETE' }),
+        problemStats: () => apiFetch<any[]>('/admin/arena/problem-stats'),
     },
 };
 
