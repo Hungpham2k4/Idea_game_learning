@@ -24,6 +24,7 @@ import {
     useLeaveWarning,
     useRoomNotices,
 } from '../RoomNotices';
+import DisconnectWatch from '../DisconnectWatch';
 
 type LogLine = { id: number; text: string; tone: 'normal' | 'good' | 'bad' | 'system' };
 let logSeq = 0;
@@ -355,6 +356,10 @@ const BoardRoom: React.FC = () => {
                 </div>
             )}
 
+            <div className="mb-4 empty:mb-0">
+                <DisconnectWatch seats={(state?.seats ?? []) as any} active={inGame} />
+            </div>
+
             {/* ── Đang giải bài: chiếm trọn màn hình ─────────────────────── */}
             {phase === 'solving' && state?.problem ? (
                 <ProblemPanel
@@ -429,7 +434,12 @@ const BoardRoom: React.FC = () => {
                             </>
                         )}
 
-                        {world && <ScoreTable world={world} meId={me?.id} currentPlayerId={state?.currentPlayerId} />}
+                        {world && <ScoreTable
+                                world={world}
+                                meId={me?.id}
+                                currentPlayerId={state?.currentPlayerId}
+                                seats={state?.seats ?? []}
+                            />}
                     </div>
 
                     {/* ── Cột phải ───────────────────────────────────── */}
@@ -543,8 +553,16 @@ const LobbyPanel: React.FC<{
                                             CHỦ BÀN
                                         </span>
                                     )}
-                                    <span className={`ml-auto text-[11px] font-bold ${seat.ready ? 'text-emerald-400' : 'text-cq-muted'}`}>
-                                        {seat.ready ? 'Sẵn sàng' : 'Đang chờ'}
+                                    <span
+                                        className={`ml-auto text-[11px] font-bold ${
+                                            !seat.connected
+                                                ? 'text-amber-400'
+                                                : seat.ready
+                                                  ? 'text-emerald-400'
+                                                  : 'text-cq-muted'
+                                        }`}
+                                    >
+                                        {!seat.connected ? 'Mất kết nối' : seat.ready ? 'Sẵn sàng' : 'Đang chờ'}
                                     </span>
                                 </>
                             ) : (
@@ -576,12 +594,14 @@ const LobbyPanel: React.FC<{
     );
 };
 
-const ScoreTable: React.FC<{ world: any; meId?: string; currentPlayerId?: string | null }> = ({
-    world,
-    meId,
-    currentPlayerId,
-}) => {
+const ScoreTable: React.FC<{
+    world: any;
+    meId?: string;
+    currentPlayerId?: string | null;
+    seats?: any[];
+}> = ({ world, meId, currentPlayerId, seats = [] }) => {
     const sorted = [...world.players].sort((a: any, b: any) => b.score - a.score);
+    const seatOf = (id: string) => seats.find((s) => s.userId === id);
     return (
         <div className="cq-glass overflow-hidden">
             <p className="border-b border-cq-line px-4 py-2.5 text-sm font-bold text-cq-strong">Bảng điểm</p>
@@ -610,6 +630,22 @@ const ScoreTable: React.FC<{ world: any; meId?: string; currentPlayerId?: string
                                         style={{ backgroundColor: SLOT_COLORS[p.slot % SLOT_COLORS.length] }}
                                     />
                                     <span className="truncate font-semibold text-cq-strong">{p.name}</span>
+                                    {seatOf(p.id)?.forfeited && (
+                                        <span
+                                            className="rounded bg-cq-line px-1.5 text-[10px] font-bold text-cq-muted"
+                                            title="Đã rời bàn hoặc hết giờ quay lại"
+                                        >
+                                            bỏ cuộc
+                                        </span>
+                                    )}
+                                    {seatOf(p.id) && !seatOf(p.id)!.connected && !seatOf(p.id)!.forfeited && (
+                                        <span
+                                            className="rounded bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-400"
+                                            title="Đang mất kết nối, chờ quay lại"
+                                        >
+                                            offline
+                                        </span>
+                                    )}
                                     {p.streak >= 2 && (
                                         <span className="rounded bg-cq-gold/20 px-1.5 text-[10px] font-bold text-cq-gold">
                                             🔥{p.streak}

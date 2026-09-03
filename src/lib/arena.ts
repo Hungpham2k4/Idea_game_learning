@@ -186,6 +186,7 @@ export const arenaApi = {
             body: { mapSlug, isPrivate },
         }),
     room: (code: string) => apiFetch<any>(`/arena/rooms/${code}`),
+    ongoing: () => apiFetch<any[]>('/arena/ongoing'),
     history: (take = 20) => apiFetch<any[]>(`/arena/history?take=${take}`),
     replay: (matchId: string) => apiFetch<any>(`/arena/replay/${matchId}`),
 

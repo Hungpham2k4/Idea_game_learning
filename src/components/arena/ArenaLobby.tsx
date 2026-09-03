@@ -29,6 +29,7 @@ const ArenaLobby: React.FC = () => {
     const [maps, setMaps] = useState<ArenaMap[]>([]);
     const [rooms, setRooms] = useState<any[]>([]);
     const [history, setHistory] = useState<any[]>([]);
+    const [ongoing, setOngoing] = useState<any[]>([]);
     const [joinCode, setJoinCode] = useState('');
     const [busy, setBusy] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -41,7 +42,10 @@ const ArenaLobby: React.FC = () => {
             .catch(() => setError('Không tải được danh sách bản đồ. Máy chủ có đang chạy không?'));
         if (!logged) return;
 
-        const load = () => arenaApi.rooms().then(setRooms).catch(() => {});
+        const load = () => {
+            arenaApi.rooms().then(setRooms).catch(() => {});
+            arenaApi.ongoing().then(setOngoing).catch(() => {});
+        };
         load();
         // Danh sách phòng đổi liên tục, nhưng mở socket riêng cho sảnh là thừa —
         // hỏi lại mỗi 5 giây đủ mượt mà nhẹ hơn nhiều.
@@ -96,6 +100,32 @@ const ArenaLobby: React.FC = () => {
                     {error}
                 </div>
             )}
+
+            {/* Ván đang dở — đặt ngay đầu trang vì nếu vừa rớt mạng thì đây là
+                thứ duy nhất người chơi cần, và họ chỉ có 2 phút để tìm thấy nó. */}
+            {ongoing.map((o) => (
+                <a
+                    key={o.roomCode}
+                    href={`/arena/room?code=${o.roomCode}`}
+                    className="cq-glass cq-ring animate-cq-rise flex flex-wrap items-center gap-4 border-amber-500/50 p-5"
+                >
+                    <span className="text-3xl">⏳</span>
+                    <div className="min-w-0 flex-1">
+                        <p className="font-extrabold text-cq-strong">Bạn đang có ván chơi dở</p>
+                        <p className="mt-0.5 text-sm text-cq-muted">
+                            {o.mapName} · phòng{' '}
+                            <span className="font-mono font-bold text-cq-neon">{o.roomCode}</span> · {o.players} người
+                        </p>
+                        {o.graceSecondsLeft > 0 && (
+                            <p className="mt-1 text-xs font-bold text-amber-400">
+                                Còn {Math.floor(o.graceSecondsLeft / 60)}:
+                                {String(o.graceSecondsLeft % 60).padStart(2, '0')} để quay lại, không thì tính bỏ cuộc
+                            </p>
+                        )}
+                    </div>
+                    <span className="cq-btn-primary shrink-0">Quay lại bàn →</span>
+                </a>
+            ))}
 
             {/* ── Vào phòng bằng mã ─────────────────────────────────────── */}
             <section className="cq-glass cq-ring animate-cq-rise relative p-6">

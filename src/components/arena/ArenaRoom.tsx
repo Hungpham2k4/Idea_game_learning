@@ -26,6 +26,7 @@ import {
     useLeaveWarning,
     useRoomNotices,
 } from './RoomNotices';
+import DisconnectWatch from './DisconnectWatch';
 
 type LogLine = { id: number; text: string; tone: 'normal' | 'mine' | 'error' | 'system' };
 
@@ -251,6 +252,10 @@ const ArenaRoom: React.FC = () => {
                     {error}
                 </div>
             )}
+
+            <div className="mb-4 empty:mb-0">
+                <DisconnectWatch seats={(state?.seats ?? []) as any} active={inGame} />
+            </div>
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
                 {/* ══ Cột trái: bàn đấu ═══════════════════════════════════ */}
