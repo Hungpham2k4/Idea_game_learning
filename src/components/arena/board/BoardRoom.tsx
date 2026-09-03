@@ -7,6 +7,7 @@ import type { Socket } from 'socket.io-client';
 import BoardCanvas from './BoardCanvas';
 import Dice3D from './Dice3D';
 import GameBanner, { useBannerQueue, type BannerKind } from './GameBanner';
+import JudgeOverlay, { type JudgeStage } from './JudgeOverlay';
 import ProblemPanel from './ProblemPanel';
 import { connectArena } from '../../../lib/arena';
 import {
@@ -129,9 +130,30 @@ const BoardRoom: React.FC = () => {
     // không thì nó giữ mãi giá trị của lần render đầu.
     const meRef = useRef(me);
     meRef.current = me;
+    /** Đề bài đang giải — handler socket đăng ký một lần nên phải đọc qua ref */
+    const judgeCtxRef = useRef<{ functionName: string; sampleTests: any[]; totalTests: number }>({
+        functionName: 'solve',
+        sampleTests: [],
+        totalTests: 0,
+    });
 
     const { notices, push: pushNotice } = useRoomNotices();
     const banner = useBannerQueue();
+
+    /**
+     * Màn chấm bài. Sống độc lập với `phase` của phòng: server chuyển sang
+     * 'resolved' ngay sau khi chấm xong (vài mili giây), nhưng màn chấm cần
+     * vài giây để lộ dần kết quả. Nó nằm đè lên trên nên không bị gỡ mất.
+     */
+    const [judge, setJudge] = useState<{
+        stage: JudgeStage;
+        solverId: string;
+        solverName: string;
+        functionName: string;
+        sampleTests: any[];
+        totalTests: number;
+        result: MyGradeResult | null;
+    } | null>(null);
     const [confirmLeave, setConfirmLeave] = useState(false);
     // Còn ở sảnh thì rời tự do; đang chơi mới cần cảnh báo
     const inGame = !!state && state.phase !== 'lobby' && state.phase !== 'finished';
@@ -218,13 +240,53 @@ const BoardRoom: React.FC = () => {
         socket.on('board:problem', (p: { solverId: string; problem: any; seconds: number }) => {
             setMyResult(null);
             setSubmitted(false);
+            setJudge(null);
+            // Giữ lại test mẫu + tên hàm để màn chấm hiện được nội dung test
+            judgeCtxRef.current = {
+                functionName: p.problem?.functionName ?? 'solve',
+                sampleTests: p.problem?.sampleTests ?? [],
+                totalTests: p.problem?.totalTests ?? 0,
+            };
             setState((prev) =>
                 prev ? { ...prev, phase: 'solving', problem: p.problem, solverId: p.solverId, secondsLeft: p.seconds } : prev,
             );
         });
 
+        socket.on('board:judging', (p: { solverId: string; name: string }) => {
+            // Mở màn chấm ngay, kể cả người đang xem — để cả phòng cùng hồi hộp
+            setJudge((prev) => ({
+                stage: 'running',
+                solverId: p.solverId,
+                solverName: p.name,
+                functionName: judgeCtxRef.current.functionName,
+                sampleTests: judgeCtxRef.current.sampleTests,
+                totalTests: judgeCtxRef.current.totalTests,
+                result: null,
+            }));
+        });
+
         socket.on('board:solveResult', (p: any) => {
             pushEvents(p.events ?? []);
+
+            // Người đang xem không nhận `board:myResult`, nên lấy kết quả chung
+            // để dựng màn chấm. Bản này chỉ có đúng/sai từng test, không có nội
+            // dung test ẩn.
+            setJudge((prev) => {
+                if (!prev || prev.solverId === meRef.current?.id) return prev;
+                return {
+                    ...prev,
+                    stage: 'reveal',
+                    result: {
+                        passed: p.passed,
+                        passedTests: p.passedTests,
+                        totalTests: p.totalTests,
+                        error: p.error,
+                        errorLine: null,
+                        details: p.details ?? [],
+                        output: [],
+                    },
+                };
+            });
 
             const nameOf = (id?: string) =>
                 p.world?.players?.find((x: any) => x.id === id)?.name ?? 'Người chơi';
@@ -238,6 +300,7 @@ const BoardRoom: React.FC = () => {
         socket.on('board:myResult', (r: MyGradeResult) => {
             setMyResult(r);
             for (const line of r.output ?? []) addLog(line, 'normal');
+            setJudge((prev) => (prev ? { ...prev, stage: 'reveal', result: r } : prev));
         });
 
         socket.on('board:finished', (p: any) => {
@@ -481,6 +544,19 @@ const BoardRoom: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {judge && (
+                <JudgeOverlay
+                    stage={judge.stage}
+                    result={judge.result}
+                    sampleTests={judge.sampleTests}
+                    totalTests={judge.totalTests}
+                    functionName={judge.functionName}
+                    isMine={judge.solverId === me?.id}
+                    solverName={judge.solverName}
+                    onDone={() => setJudge(null)}
+                />
             )}
 
             <GameBanner item={banner.current} onDone={banner.next} />
